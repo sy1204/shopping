@@ -373,5 +373,9 @@ module.exports = {
     savePriceUpdate,
     getProductHistory,
     getAllProducts,
-    deleteProduct
+    deleteProduct,
+    updateProduct,
+    getAllUsers,
+    deleteUser,
+    updateUser
 };
