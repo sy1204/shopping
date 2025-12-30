@@ -9,6 +9,13 @@ function Dashboard() {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
+    // Admin Redirect Check
+    useEffect(() => {
+        if (user && user.email === 'enrichdotcom@naver.com') {
+            navigate('/admin', { replace: true });
+        }
+    }, [user, navigate]);
+
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [urlInput, setUrlInput] = useState("");
