@@ -3,20 +3,12 @@
 if (window.location.hostname.includes('shopping-sy1204s-projects.vercel.app') || window.location.hostname.includes('localhost')) {
     console.log('👀 Noonting Dashboard detected. Triggering Sync...');
 
-    // 페이지 로드 완료 시 전송
     window.addEventListener('load', () => {
         chrome.runtime.sendMessage({ type: 'START_SYNC' }, (response) => {
             console.log('✅ Sync started:', response);
-            // Optional: Add visual indicator on the page
-            const badge = document.createElement('div');
-            badge.innerHTML = '🔭 눈팅 중...';
-            badge.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#3b82f6; color:white; padding:10px 20px; border-radius:30px; z-index:9999; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.1);';
-            document.body.appendChild(badge);
-            setTimeout(() => badge.remove(), 5000);
         });
     });
 }
-
 // 2. 쇼핑몰 감지 및 가격 추출
 else {
     checkPrice();
@@ -26,12 +18,19 @@ function checkPrice() {
     const hostname = window.location.hostname;
     let price = null;
     let mallName = 'Unknown';
+    let title = null;
+    let image = null;
 
     try {
+        // --- Metadata Extraction (Common) ---
+        const ogTitle = document.querySelector('meta[property="og:title"]')?.content;
+        const ogImage = document.querySelector('meta[property="og:image"]')?.content;
+        title = ogTitle || document.title;
+        image = ogImage;
+
         // --- Coupang ---
         if (hostname.includes('coupang.com')) {
             mallName = 'Coupang';
-            // span.total-price > strong
             const element = document.querySelector('span.total-price > strong') ||
                 document.querySelector('.prod-sale-price .total-price > strong');
             if (element) price = parsePrice(element.innerText);
@@ -40,7 +39,6 @@ function checkPrice() {
         // --- Naver SmartStore / Shopping ---
         else if (hostname.includes('naver.com')) {
             mallName = 'Naver';
-            // .lowest_price_area .price, ._price_area
             const element = document.querySelector('.lowest_price_area .price') ||
                 document.querySelector('._price_area ._price') ||
                 document.querySelector('.price_area .price');
@@ -50,7 +48,6 @@ function checkPrice() {
         // --- Gmarket ---
         else if (hostname.includes('gmarket.co.kr')) {
             mallName = 'Gmarket';
-            // .price_real > .price_txt
             const element = document.querySelector('.price_real > .price_txt') ||
                 document.querySelector('.price_real');
             if (element) price = parsePrice(element.innerText);
@@ -59,7 +56,6 @@ function checkPrice() {
         // --- 11st ---
         else if (hostname.includes('11st.co.kr')) {
             mallName = '11st';
-            // .price_detail .value
             const element = document.querySelector('.price_detail .value') ||
                 document.querySelector('.sale_price');
             if (element) price = parsePrice(element.innerText);
@@ -80,11 +76,11 @@ function checkPrice() {
                 data: {
                     url: window.location.href,
                     price: price,
-                    mall: mallName
+                    mall: mallName,
+                    title: title, // Added
+                    image: image  // Added
                 }
             });
-        } else {
-            // console.log('❌ [Noonting] Price not found on this page.');
         }
 
     } catch (e) {

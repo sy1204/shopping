@@ -175,12 +175,16 @@ async function saveSearchResults(searchQuery, results) {
 /**
  * URL 기반으로 가격 정보를 업데이트하고 이력을 저장함 (Extension용)
  */
-async function savePriceUpdate(url, price) {
+/**
+ * URL 기반으로 가격 정보를 업데이트하고 이력을 저장함 (Extension용)
+ * Optionally updates Product Title/Image if they are placeholders.
+ */
+async function savePriceUpdate(url, price, title = null, image = null) {
     try {
         // 1. 링크 정보 조회
         const { data: link, error: linkError } = await supabase
             .from('product_links')
-            .select('id, product_id')
+            .select('id, product_id, products(title, represent_image)') // Link to Product
             .eq('url', url)
             .single();
 
@@ -202,6 +206,27 @@ async function savePriceUpdate(url, price) {
             .eq('id', link.id);
 
         if (updateError) throw updateError;
+
+        // 4. (Self-Healing) 상품 정보 업데이트 (제목/이미지가 없거나 Placeholder인 경우)
+        if (title || image) {
+            const currentTitle = link.products?.title;
+            const currentImage = link.products?.represent_image;
+            const needsUpdate = (currentTitle === '상품 정보를 가져오는 중...' || !currentTitle) || (!currentImage);
+
+            if (needsUpdate) {
+                const updateData = {};
+                if (title) updateData.title = title;
+                if (image) updateData.represent_image = image;
+
+                if (Object.keys(updateData).length > 0) {
+                    await supabase
+                        .from('products')
+                        .update(updateData)
+                        .eq('id', link.product_id);
+                    console.log(`✨ Self-healed product info for ID ${link.product_id}`);
+                }
+            }
+        }
 
         return { success: true, productId: link.product_id, linkId: link.id };
 

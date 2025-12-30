@@ -60,62 +60,66 @@ app.post('/api/products', async (req, res) => {
 
     console.log(`🔗 [API] URL 등록 요청: ${url}`);
 
+    let title = '상품 정보를 가져오는 중...';
+    let image = '';
+    let price = 0;
+    let fetchSuccess = false;
+
     try {
-        // 1. Fetch Page Metadata
+        // 1. Fetch Page Metadata (Best Effort)
         const response = await axios.get(url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
             timeout: 5000
         });
         const html = response.data;
 
-        // 2. Extract Title & Image (Simple Regex)
         const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
         const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
 
-        // Price extraction is tricky without PUPPETEER, so we set 0 and let Extension update it later.
-        // Some sites put price in og:description or json-ld, but for reliability, we rely on Extension.
-        const price = 0;
-
-        const title = titleMatch ? titleMatch[1] : url;
-        const image = imageMatch ? imageMatch[1] : '';
+        if (titleMatch) title = titleMatch[1];
+        if (imageMatch) image = imageMatch[1];
+        fetchSuccess = true;
 
         console.log(`📦 Metadata Fetched: ${title}`);
 
-        // 3. Save to DB
-        const result = await saveCrawlResult({
-            title: title,
-            image: image,
-            price: price,
-            url: url
-        });
-
-        if (result.success) {
-            res.json({ message: 'Product registered successfully', productId: result.productId, linkId: result.linkId });
-        } else {
-            res.status(500).json({ error: 'Failed to save product', details: result.error });
-        }
-
     } catch (error) {
-        console.error('❌ URL Fetch Error:', error.message);
-        // Even if fetch fails, we might still want to register the URL? 
-        // No, better to fail and tell user "Check URL".
-        res.status(500).json({ error: 'Failed to access URL', details: error.message });
+        console.warn('⚠️ URL Fetch Failed (Network/Blocked). Registering as Placeholder.', error.message);
+        // Continue with default placeholder values
+    }
+
+    // 2. Save to DB (Even if fetch failed)
+    const result = await saveCrawlResult({
+        title: title,
+        image: image,
+        price: price,
+        url: url
+    });
+
+    if (result.success) {
+        res.json({
+            message: fetchSuccess ? 'Product registered successfully' : 'Product registered (Placeholder). Extension will update details.',
+            productId: result.productId,
+            linkId: result.linkId,
+            isPlaceholder: !fetchSuccess
+        });
+    } else {
+        res.status(500).json({ error: 'Failed to save product', details: result.error });
     }
 });
 
 // 3. 가격 업데이트 API (For Extension)
 app.post('/api/products/:id/price', async (req, res) => {
     const { id } = req.params; // productId (검증용, 실제로는 url로 찾음)
-    const { url, price } = req.body;
+    const { url, price, title, image } = req.body; // Added title, image
 
     if (!url || !price) return res.status(400).json({ error: 'URL and price are required' });
 
-    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${price}원`);
+    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${price}원 (Title: ${title ? 'Yes' : 'No'})`);
 
-    const result = await savePriceUpdate(url, price);
+    const result = await savePriceUpdate(url, price, title, image);
 
     if (result.success) {
-        res.json({ message: 'Price updated successfully', result });
+        res.json({ message: 'Price and info updated successfully', result });
     } else {
         res.status(500).json({ error: 'Failed to update price', details: result.error });
     }
