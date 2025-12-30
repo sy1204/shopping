@@ -8,7 +8,8 @@ const ProductDetail = ({
     user,
     onUpdateMemo,
     onAdjustTargetPrice,
-    onToggleAlertOption
+    onToggleAlertOption,
+    onUpdateCategory
 }) => {
     // Local state for memo editing to keep it self-contained if possible, 
     // but the parent was managing it. Let's keep parent management for simplicity of data flow for now,
