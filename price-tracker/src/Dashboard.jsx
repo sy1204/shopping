@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { supabase } from './supabaseClient';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Search, Bell, ShoppingBag, ArrowDown, ArrowUp, Store, CheckCircle, ChevronRight, X, Target, StickyNote, Info, Plus, List, BarChart2, Repeat, LogOut } from 'lucide-react';
 import { useAuth } from './contexts/AuthContext';
