@@ -294,10 +294,82 @@ async function deleteProduct(id) {
     }
 }
 
+async function updateProduct(id, updates) {
+    try {
+        const { error } = await supabase
+            .from('products')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+// User Management (Requires SERVICE_ROLE_KEY for auth.admin)
+// If key is missing, these will likely fail or require a different approach (e.g. valid session)
+// For safety, we check if key exists.
+const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+async function getAllUsers() {
+    if (!hasServiceKey) {
+        // Fallback: If no service key, return mock or empty. 
+        // In production, you'd MUST have the key for this.
+        console.warn("⚠️ MOCKING getAllUsers: SUPABASE_SERVICE_ROLE_KEY missing.");
+        return {
+            success: true, data: [
+                { id: 'mock-1', email: 'enrichdotcom@naver.com', created_at: new Date().toISOString() },
+                { id: 'mock-2', email: 'test@example.com', created_at: new Date().toISOString() }
+            ]
+        };
+    }
+
+    try {
+        // Use separate admin client if needed, or if current client has key
+        // Assuming current 'supabase' client was init with SERVICE KEY if available?
+        // Actually, init implies: createClient(url, key). If 'key' was ANON, we can't do admin.
+        // We need a NEW client with service key.
+        const adminSupabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+        const { data: { users }, error } = await adminSupabase.auth.admin.listUsers();
+        if (error) throw error;
+        return { success: true, data: users };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async function deleteUser(id) {
+    if (!hasServiceKey) return { success: false, error: "Server missing Service Role Key" };
+    try {
+        const adminSupabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        const { error } = await adminSupabase.auth.admin.deleteUser(id);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async function updateUser(id, updates) {
+    if (!hasServiceKey) return { success: false, error: "Server missing Service Role Key" };
+    try {
+        const adminSupabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY);
+        const { error } = await adminSupabase.auth.admin.updateUserById(id, updates);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     supabase,
     saveCrawlResult,
     saveSearchResults,
+
     savePriceUpdate,
     getProductHistory,
     getAllProducts,

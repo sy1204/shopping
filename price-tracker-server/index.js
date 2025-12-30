@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 const { supabase, saveCrawlResult, saveSearchResults, savePriceUpdate, getProductHistory } = require('./db');
 const { searchMalls } = require('./crawler');
 const authMiddleware = require('./middleware/auth');
-const { getAllProducts, deleteProduct } = require('./db');
+const { getAllProducts, deleteProduct, updateProduct, getAllUsers, deleteUser, updateUser } = require('./db');
 
 // Admin Middleware
 const adminMiddleware = (req, res, next) => {
@@ -193,6 +193,48 @@ app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, async (re
         res.json({ message: 'Product deleted' });
     } else {
         res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
+app.patch('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body; // { category: 'review' | 'managed' }
+    const result = await updateProduct(id, updates);
+    if (result.success) {
+        res.json({ message: 'Product updated' });
+    } else {
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
+// User Management Routes
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
+    const result = await getAllUsers();
+    if (result.success) {
+        res.json(result.data);
+    } else {
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const result = await deleteUser(id);
+    if (result.success) {
+        res.json({ message: 'User deleted' });
+    } else {
+        res.status(500).json({ error: result.error || 'Failed to delete user' });
+    }
+});
+
+app.patch('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body; // { email, password, etc. }
+    const result = await updateUser(id, updates);
+    if (result.success) {
+        res.json({ message: 'User updated' });
+    } else {
+        res.status(500).json({ error: result.error || 'Failed to update user' });
     }
 });
 
