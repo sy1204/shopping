@@ -1,0 +1,19 @@
+{
+    "agents": [
+        {
+            "id": "project_manager",
+            "name": "프로젝트매니저",
+            "blueprint": "blueprints/pm.md"
+        },
+        {
+            "id": "frontend",
+            "name": "프론트엔드담당",
+            "blueprint": "blueprints/fe.md"
+        },
+        {
+            "id": "backend",
+            "name": "백엔드담당",
+            "blueprint": "blueprints/be.md"
+        }
+    ]
+}
