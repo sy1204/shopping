@@ -62,8 +62,7 @@ app.post('/api/search', async (req, res) => {
 
 // 2. 개별 URL 크롤링 및 저장 API (기존 방식 유지)
 app.post('/api/crawl', async (req, res) => {
-    // ... (기존 crawlProduct가 crawler.js에서 제거되었으므로, 필요한 경우 다시 추가하거나 searchMalls로 일원화)
-    res.status(501).json({ error: 'Manual URL crawl is being refactored. Use /api/search instead.' });
+    res.status(501).json({ error: 'Direct URL crawling is disabled for cloud deployment. Please use Search feature.' });
 });
 
 // 3. 상품 목록 조회 API (New)
