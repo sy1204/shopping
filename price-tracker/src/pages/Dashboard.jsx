@@ -127,7 +127,10 @@ function Dashboard() {
                 body: JSON.stringify({ category: newCategory })
             });
 
-            if (!response.ok) throw new Error('Failed to update category');
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.details || 'Failed to update category');
+            }
 
             const updated = products.map(p =>
                 p.id === productId ? { ...p, category: newCategory } : p
@@ -150,7 +153,7 @@ function Dashboard() {
 
         } catch (error) {
             console.error(error);
-            setNotification({ message: '상태 변경 실패', type: 'error' });
+            setNotification({ message: `상태 변경 실패: ${error.message}`, type: 'error' });
         }
     };
 

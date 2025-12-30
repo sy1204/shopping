@@ -170,7 +170,8 @@ app.patch('/api/products/:id', async (req, res) => {
     if (result.success) {
         res.json({ message: 'Product updated successfully' });
     } else {
-        res.status(500).json({ error: 'Failed to update product' });
+        console.error(`❌ Product Update Failed: ${result.error}`);
+        res.status(500).json({ error: 'Failed to update product', details: result.error });
     }
 });
 
