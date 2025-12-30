@@ -176,7 +176,18 @@ const AdminDashboard = () => {
 
     return (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', fontFamily: 'Pretendard, sans-serif' }}>
-            <h1 style={{ marginBottom: '2rem' }}>관리자 대시보드</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h1 style={{ margin: 0 }}>관리자 대시보드</h1>
+                <button
+                    onClick={() => navigate('/')}
+                    style={{
+                        padding: '8px 16px', borderRadius: '8px', border: '1px solid #ddd', background: 'white',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 'bold'
+                    }}
+                >
+                    <ShoppingBag size={16} /> 메인으로
+                </button>
+            </div>
 
             {notification && (
                 <div style={{ padding: '10px', marginBottom: '1rem', background: notification.type === 'success' ? '#dcfce7' : '#fee2e2', color: notification.type === 'success' ? '#166534' : '#991b1b', borderRadius: '8px' }}>

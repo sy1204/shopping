@@ -9,12 +9,7 @@ function Dashboard() {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
-    // Admin Redirect Check
-    useEffect(() => {
-        if (user && user.email === 'enrichdotcom@naver.com') {
-            navigate('/admin', { replace: true });
-        }
-    }, [user, navigate]);
+    // Admin Redirect Check removed to allow admin to view main dashboard
 
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
