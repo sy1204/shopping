@@ -11,7 +11,20 @@ if (window.location.hostname.includes('shopping-sy1204s-projects.vercel.app') ||
 }
 // 2. 쇼핑몰 감지 및 가격 추출
 else {
+    // Retry logic for Single Page Applications (SPA) that load content dynamically
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    // Initial check
     checkPrice();
+
+    const interval = setInterval(() => {
+        attempts++;
+        const found = checkPrice(); // checkPrice now returns true if successful
+        if (found || attempts >= maxAttempts) {
+            clearInterval(interval);
+        }
+    }, 1000);
 }
 
 function checkPrice() {
@@ -106,15 +119,16 @@ function checkPrice() {
                     url: window.location.href,
                     price: price,
                     mall: mallName,
-                    title: title, // Added
-                    image: image  // Added
+                    title: title,
+                    image: image
                 }
             });
+            return true; // Found!
         }
-
     } catch (e) {
-        console.error('Noonting Parse Error:', e);
+        console.error('Price check failed:', e);
     }
+    return false; // Not found
 }
 
 function parsePrice(text) {
