@@ -167,10 +167,8 @@ const AdminDashboard = () => {
 
     const filteredProducts = products.filter(p => {
         if (productFilter === 'all') return true;
-        // Default null category matches 'managed' or creating logic? 
-        // Let's assume default is 'managed'. If category is missing, treat as 'managed'.
-        // Wait, user asked: Review vs Managed.
-        const cat = p.category || 'managed';
+        // Default null category to 'review' (safer default)
+        const cat = p.category || 'review';
         return cat === productFilter;
     });
 
@@ -290,12 +288,12 @@ const AdminDashboard = () => {
                                         <td style={{ padding: '12px', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.title}</td>
                                         <td style={{ padding: '12px' }}>
                                             <select
-                                                value={p.category || 'managed'}
+                                                value={p.category || 'review'}
                                                 onChange={(e) => handleUpdateProductCategory(p.id, e.target.value)}
                                                 style={{
                                                     padding: '4px 8px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '12px',
-                                                    background: (p.category || 'managed') === 'review' ? '#fffbeb' : '#ecfdf5',
-                                                    color: (p.category || 'managed') === 'review' ? '#d97706' : '#047857'
+                                                    background: (p.category || 'review') === 'review' ? '#fffbeb' : '#ecfdf5',
+                                                    color: (p.category || 'review') === 'review' ? '#d97706' : '#047857'
                                                 }}
                                             >
                                                 <option value="review">구매검토</option>
