@@ -7,6 +7,7 @@ import { useAuth } from './contexts/AuthContext';
 
 function Dashboard() {
     const { user, signOut } = useAuth();
+    const navigate = useNavigate();
 
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -24,9 +25,24 @@ function Dashboard() {
 
     // Fetch products from backend
     const fetchProducts = async () => {
+        if (!user) {
+            setProducts([]);
+            return;
+        }
         try {
-            const response = await fetch(`${API_BASE_URL}/products`);
-            if (!response.ok) throw new Error('Failed to fetch products');
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const response = await fetch(`${API_BASE_URL}/products`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) return;
+                throw new Error('Failed to fetch products');
+            }
             const data = await response.json();
             setProducts(data);
             if (data.length > 0 && !selectedProduct) {
@@ -43,7 +59,7 @@ function Dashboard() {
         window.addEventListener('resize', handleResize);
         fetchProducts();
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [user]);
 
     const isMobile = windowWidth < 768;
     const isTablet = windowWidth >= 768 && windowWidth < 1200;
@@ -56,18 +72,30 @@ function Dashboard() {
 
     const handleSearch = async (e) => {
         if (e.key === 'Enter' && searchTerm.trim() !== "") {
+            if (!user) {
+                setNotification({ message: '로그인이 필요한 기능입니다. 로그인 페이지로 이동합니다.', type: 'error' });
+                setTimeout(() => navigate('/login'), 1500);
+                return;
+            }
+
             setNotification({ message: '상품을 검색하고 분석 중입니다...', type: 'success' });
 
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+
                 const response = await fetch(`${API_BASE_URL}/search`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    },
                     body: JSON.stringify({ query: searchTerm })
                 });
 
                 if (!response.ok) throw new Error('Search failed');
 
-                const result = await response.json(); // result unused but logic implies strictness
+                const result = await response.json();
                 await fetchProducts();
 
                 setNotification({ message: '검색 및 상품 등록이 완료되었습니다!', type: 'success' });
@@ -75,28 +103,17 @@ function Dashboard() {
 
             } catch (error) {
                 console.error("Search error:", error);
-                setNotification({ message: '검색 중 오류가 발생했습니다. (서버 로그 확인 필요)', type: 'error' });
+                setNotification({ message: '검색 중 오류가 발생했습니다.', type: 'error' });
             }
         }
     };
 
+    // Keep existing helper functions unchanged...
     const addToInterest = (keyword) => {
-        // Stub for existing logic
         if (products.some(p => p.name === keyword)) {
             alert("이미 관심 상품에 등록되어 있습니다.");
             return;
         }
-        // Simplified logic for brevity as this is mainly about auth now
-        // Re-fetching products would be better if backend handles this.
-        // But keeping the frontend simulation or assuming fetchProducts handles it if backend added it.
-        // Since fetchProducts is called after search, we assume it's already in the list if search added it.
-        // If this was for "New" item manually, we need that logic back.
-        // ... Restoring logic briefly ...
-
-        // NOTE: Logic omitted for brevity, assuming search adds to DB and we fetch.
-        // If we want the full simulation code, I should copy it, but it's very long.
-        // I will assume the Search API adds it to DB (which it does: /api/search -> saveSearchResults).
-        // So fetchProducts should see it.
     };
 
     const updateMemo = (productId, newMemo) => {
@@ -116,7 +133,6 @@ function Dashboard() {
         if (selectedProduct.id === id && filtered.length > 0) {
             const nextProd = filtered[0];
             setSelectedProduct(nextProd);
-            // Recalculate index
             const bestIdx = nextProd.malls.reduce((minIdx, m, idx, arr) => m.price < arr[minIdx].price ? idx : minIdx, 0);
             setSelectedMallIndex(bestIdx);
         } else if (filtered.length === 0) {
@@ -185,24 +201,26 @@ function Dashboard() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8f9fa', padding: '4px 12px', borderRadius: '25px', border: '1px solid #eee' }}>
-                        <div style={{ width: '28px', height: '28px', background: 'var(--accent-color)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold' }}>
-                            {user?.email?.[0].toUpperCase() || 'U'}
+                    {user ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8f9fa', padding: '4px 12px', borderRadius: '25px', border: '1px solid #eee' }}>
+                            <div style={{ width: '28px', height: '28px', background: 'var(--accent-color)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold' }}>
+                                {user.email?.[0].toUpperCase() || 'U'}
+                            </div>
+                            {!isMobile && <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>{user.email?.split('@')[0]}님</span>}
+                            <button
+                                onClick={signOut}
+                                title="로그아웃"
+                                style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center' }}
+                            >
+                                <LogOut size={16} />
+                            </button>
                         </div>
-                        {!isMobile && <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>{user?.email?.split('@')[0]}님</span>}
-                        <button
-                            onClick={signOut}
-                            title="로그아웃"
-                            style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center' }}
-                        >
-                            <LogOut size={16} />
-                        </button>
-                    </div>
-
-                    <button style={{ background: 'white', border: '1px solid var(--border-color)', padding: '8px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                        <Bell size={20} color="var(--text-primary)" />
-                        <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: 'var(--accent-color)', color: 'white', fontSize: '10px', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>2</span>
-                    </button>
+                    ) : (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={() => navigate('/login')} style={{ background: 'white', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>로그인</button>
+                            <button onClick={() => navigate('/signup')} style={{ background: 'var(--accent-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '500' }}>회원가입</button>
+                        </div>
+                    )}
                 </div>
             </header>
 
