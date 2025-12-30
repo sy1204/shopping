@@ -171,4 +171,72 @@ async function saveSearchResults(searchQuery, results) {
     }
 }
 
-module.exports = { supabase, saveCrawlResult, saveSearchResults };
+
+/**
+ * URL 기반으로 가격 정보를 업데이트하고 이력을 저장함 (Extension용)
+ */
+async function savePriceUpdate(url, price) {
+    try {
+        // 1. 링크 정보 조회
+        const { data: link, error: linkError } = await supabase
+            .from('product_links')
+            .select('id, product_id')
+            .eq('url', url)
+            .single();
+
+        if (linkError || !link) {
+            throw new Error(`Link not found for URL: ${url}`);
+        }
+
+        // 2. 가격 이력 추가
+        const { error: historyError } = await supabase
+            .from('price_history')
+            .insert([{ link_id: link.id, price: price }]);
+
+        if (historyError) throw historyError;
+
+        // 3. 현재가 업데이트
+        const { error: updateError } = await supabase
+            .from('product_links')
+            .update({ current_price: price, last_tracked_at: new Date() })
+            .eq('id', link.id);
+
+        if (updateError) throw updateError;
+
+        return { success: true, productId: link.product_id, linkId: link.id };
+
+    } catch (error) {
+        console.error('❌ savePriceUpdate Error:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 특정 상품의 모든 링크에 대한 가격 이력을 조회함
+ */
+async function getProductHistory(productId) {
+    try {
+        const { data: links, error: linkError } = await supabase
+            .from('product_links')
+            .select(`
+                id,
+                mall_name,
+                url,
+                price_history (
+                    price,
+                    tracked_at
+                )
+            `)
+            .eq('product_id', productId);
+
+        if (linkError) throw linkError;
+
+        return { success: true, links };
+
+    } catch (error) {
+        console.error('❌ getProductHistory Error:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+module.exports = { supabase, saveCrawlResult, saveSearchResults, savePriceUpdate, getProductHistory };

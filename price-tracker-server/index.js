@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const axios = require('axios'); // Added for URL metadata fetching
 require('dotenv').config();
 
 const app = express();
@@ -16,56 +17,126 @@ app.use((req, res, next) => {
     next();
 });
 
-const { supabase, saveCrawlResult, saveSearchResults } = require('./db');
+const { supabase, saveCrawlResult, saveSearchResults, savePriceUpdate, getProductHistory } = require('./db');
 const { searchMalls } = require('./crawler');
 const authMiddleware = require('./middleware/auth');
 
 // Routes
 app.get('/', (req, res) => {
-    res.json({ message: 'Price Tracker API is running', status: 'online' });
+    res.json({ message: 'Noonting API is running', status: 'online' });
 });
 
-// 1. 통합 검색 및 자동 등록 API (새로운 방식)
+// 1. 통합 검색 및 자동 등록 API (Legacy Support)
 app.post('/api/search', async (req, res) => {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: 'Search query is required' });
 
     console.log(`🔎 [API] 통합 검색 요청 수신: "${query}"`);
 
-    // (1) 5대 쇼핑몰 동시 검색 및 인기 상품 추출
     const searchResult = await searchMalls(query);
 
-    console.log('🔍 [API DEBUG] searchResult:', JSON.stringify(searchResult, null, 2));
-
     if (!searchResult.success) {
-        console.error('❌ [API] 통합 검색 실패:', searchResult.error);
         return res.status(500).json({ error: 'Search failed', details: searchResult.error });
     }
 
-    // (2) 검색된 결과를 DB에 자동 매칭하여 저장
     const dbResult = await saveSearchResults(query, searchResult.results);
 
     if (dbResult.success) {
-        console.log('💾 [API] 검색 결과 DB 저장 완료');
         res.json({
             message: 'Search and registration completed',
             query: query,
             resultsCount: searchResult.results.length,
-            productId: dbResult.productId,
             results: searchResult.results
         });
     } else {
-        console.error('❌ [API] DB 저장 실패:', dbResult.error);
         res.status(500).json({ error: 'Search completed but failed to save to DB', details: dbResult.error });
     }
 });
 
-// 2. 개별 URL 크롤링 및 저장 API (기존 방식 유지)
-app.post('/api/crawl', async (req, res) => {
-    res.status(501).json({ error: 'Direct URL crawling is disabled for cloud deployment. Please use Search feature.' });
+// 2. URL 직접 등록 API (New Feature)
+app.post('/api/products', async (req, res) => {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    console.log(`🔗 [API] URL 등록 요청: ${url}`);
+
+    try {
+        // 1. Fetch Page Metadata
+        const response = await axios.get(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
+            timeout: 5000
+        });
+        const html = response.data;
+
+        // 2. Extract Title & Image (Simple Regex)
+        const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
+        const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
+
+        // Price extraction is tricky without PUPPETEER, so we set 0 and let Extension update it later.
+        // Some sites put price in og:description or json-ld, but for reliability, we rely on Extension.
+        const price = 0;
+
+        const title = titleMatch ? titleMatch[1] : url;
+        const image = imageMatch ? imageMatch[1] : '';
+
+        console.log(`📦 Metadata Fetched: ${title}`);
+
+        // 3. Save to DB
+        const result = await saveCrawlResult({
+            title: title,
+            image: image,
+            price: price,
+            url: url
+        });
+
+        if (result.success) {
+            res.json({ message: 'Product registered successfully', productId: result.productId, linkId: result.linkId });
+        } else {
+            res.status(500).json({ error: 'Failed to save product', details: result.error });
+        }
+
+    } catch (error) {
+        console.error('❌ URL Fetch Error:', error.message);
+        // Even if fetch fails, we might still want to register the URL? 
+        // No, better to fail and tell user "Check URL".
+        res.status(500).json({ error: 'Failed to access URL', details: error.message });
+    }
 });
 
-// 3. 상품 목록 조회 API (New)
+// 3. 가격 업데이트 API (For Extension)
+app.post('/api/products/:id/price', async (req, res) => {
+    const { id } = req.params; // productId (검증용, 실제로는 url로 찾음)
+    const { url, price } = req.body;
+
+    if (!url || !price) return res.status(400).json({ error: 'URL and price are required' });
+
+    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${price}원`);
+
+    const result = await savePriceUpdate(url, price);
+
+    if (result.success) {
+        res.json({ message: 'Price updated successfully', result });
+    } else {
+        res.status(500).json({ error: 'Failed to update price', details: result.error });
+    }
+});
+
+// 3. 가격 이력 조회 API
+app.get('/api/products/:id/history', async (req, res) => {
+    const { id } = req.params;
+
+    console.log(`📈 [API] 가격 이력 조회 요청: Product ID ${id}`);
+
+    const result = await getProductHistory(id);
+
+    if (result.success) {
+        res.json({ history: result.links });
+    } else {
+        res.status(500).json({ error: 'Failed to fetch history', details: result.error });
+    }
+});
+
+// 4. 상품 목록 조회 API
 app.get('/api/products', async (req, res) => {
     try {
         const { data: products, error } = await supabase
@@ -92,7 +163,7 @@ app.get('/api/products', async (req, res) => {
                 name: link.mall_name,
                 price: link.current_price,
                 url: link.url,
-                histories: [] // 가격 이력은 별도 조회 필요하거나 조인 필요
+                histories: [] // 상세 이력은 별도 API로 조회
             }))
         }));
 

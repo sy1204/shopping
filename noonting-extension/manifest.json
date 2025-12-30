@@ -1,0 +1,39 @@
+{
+    "manifest_version": 3,
+    "name": "눈팅 (Noonting) - 쇼핑 가격 추적",
+    "version": "1.0",
+    "description": "내가 찜한 상품의 가격을 자동으로 추적하여 최적의 구매 타이밍을 알려줍니다.",
+    "permissions": [
+        "tabs",
+        "activeTab",
+        "storage",
+        "scripting",
+        "alarms"
+    ],
+    "host_permissions": [
+        "http://localhost:3001/*",
+        "https://shopping-sy1204s-projects.vercel.app/*",
+        "*://*.coupang.com/*",
+        "*://*.naver.com/*",
+        "*://*.11st.co.kr/*",
+        "*://*.gmarket.co.kr/*",
+        "*://*.auction.co.kr/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "눈팅 (Noonting)"
+    }
+}
