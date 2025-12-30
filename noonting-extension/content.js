@@ -28,6 +28,18 @@ else {
 }
 
 function checkPrice() {
+    // 0. CAPTCHA / Block Detection
+    if (document.body.innerText.includes('보안 확인을 완료해 주세요') ||
+        document.body.innerText.includes('비정상적인 접근') ||
+        document.title.includes('보안 확인')) {
+
+        console.warn('⛔ [Noonting] CAPTCHA detected.');
+        // Alert user only once per page load (optional, but retry loop makes this spammy if not handled)
+        // Returning true here stops the retry loop in the caller.
+        alert('⛔ [눈팅 확장프로그램]\n\n쇼핑몰 보안 확인(CAPTCHA)이 감지되었습니다.\n화면의 보안 문자를 입력하여 인증을 완료해주시면, 가격 정보를 가져올 수 있습니다!');
+        return true;
+    }
+
     const hostname = window.location.hostname;
     let price = null;
     let mallName = 'Unknown';
