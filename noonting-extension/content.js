@@ -44,15 +44,31 @@ function checkPrice() {
                 document.querySelector('.price_area .price') ||
                 document.querySelector('.product_price .price');
 
-            // Fallback: Text Search for "99,000원" format if selector fails (Brand Stores often use dynamic classes)
+            // Fallback: Text Search for "99,000원" format if selector fails
             if (!price && (!element || !parsePrice(element.innerText))) {
-                const candidates = Array.from(document.querySelectorAll('span, strong, div'));
-                // Find element that has price text, is visible, and has a reasonably large font (optional, but text match is first step)
-                const priceEl = candidates.find(el => {
-                    const text = el.innerText.trim();
-                    return /^[0-9,]+원$/.test(text) && el.children.length === 0; // Leaf node with price
-                });
-                if (priceEl) price = parsePrice(priceEl.innerText);
+                // Scan for elements containing "원" and look for price pattern
+                const candidates = Array.from(document.querySelectorAll('span, strong, div, em, b'));
+
+                for (const el of candidates) {
+                    // Normalize text: remove whitespace and hidden characters
+                    const text = el.innerText.replace(/\s+/g, '');
+                    // Match pattern: Number + '원' (e.g., "169,000원")
+                    const match = text.match(/([0-9,]+)원/);
+
+                    // Filter out unlikely candidates (too long text, dates, etc.)
+                    // ensuring the text is short enough to be a price label
+                    if (match && text.length < 50) {
+                        const rawPrice = match[1];
+                        // Basic validation: meaningful number length
+                        if (rawPrice.replace(/,/g, '').length >= 3) {
+                            const parsed = parsePrice(rawPrice);
+                            if (parsed > 0) {
+                                price = parsed;
+                                break; // Stop at first valid match
+                            }
+                        }
+                    }
+                }
             } else if (element) {
                 price = parsePrice(element.innerText);
             }
