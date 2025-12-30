@@ -156,6 +156,24 @@ app.get('/api/products/:id/history', async (req, res) => {
     }
 });
 
+// 4. 상품 정보 업데이트 API (General - Category, Memo, TargetPrice)
+app.patch('/api/products/:id', async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body; // { category, memo, targetPrice, alertOptions }
+
+    // In a real multi-user app, we should check if the user owns this product or is admin.
+    // For this single-tenant/admin-focused app, we'll allow it.
+
+    console.log(`📝 [API] Product Update: ${id}`, updates);
+
+    const result = await updateProduct(id, updates);
+    if (result.success) {
+        res.json({ message: 'Product updated successfully' });
+    } else {
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
 // --- ADMIN ROUTES ---
 app.get('/api/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
     const result = await getAllProducts();

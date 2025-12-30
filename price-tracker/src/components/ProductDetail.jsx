@@ -61,14 +61,31 @@ const ProductDetail = ({
                     <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ background: '#f3f4f6', color: '#666', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
-                            {primaryMallData?.name || 'Unknown'}
-                        </span>
-                        <a href={primaryMallData?.url || '#'} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#3b82f6', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            상품 보러가기 <ExternalLink size={12} />
-                        </a>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <span style={{ background: '#f3f4f6', color: '#666', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
+                                {primaryMallData?.name || 'Unknown'}
+                            </span>
+                            <a href={primaryMallData?.url || '#'} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#3b82f6', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                상품 보러가기 <ExternalLink size={12} />
+                            </a>
+                        </div>
+
+                        {/* Status Change Button */}
+                        {onUpdateCategory && (selectedProduct.category || 'review') === 'review' && (
+                            <button
+                                onClick={() => onUpdateCategory(selectedProduct.id, 'managed')}
+                                style={{
+                                    padding: '6px 12px', borderRadius: '8px', border: '1px solid #d97706',
+                                    background: '#fffbeb', color: '#d97706', fontSize: '12px', fontWeight: 'bold',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
+                                }}
+                            >
+                                구매완료 (관리로 이동)
+                            </button>
+                        )}
                     </div>
+
                     <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111', margin: '0 0 12px 0', lineHeight: 1.3 }}>
                         {selectedProduct.name}
                     </h2>
