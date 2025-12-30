@@ -211,13 +211,19 @@ function Dashboard() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     {user ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'white', padding: '6px 14px', borderRadius: '30px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+                        <div
+                            onClick={() => navigate('/profile')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'white', padding: '6px 14px', borderRadius: '30px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', cursor: 'pointer', transition: 'all 0.2s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                            title="회원 정보 관리"
+                        >
                             <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, var(--accent-color), #5856d6)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
                                 {user.email?.[0].toUpperCase() || 'U'}
                             </div>
                             {!isMobile && <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{user.email?.split('@')[0]}님</span>}
                             <button
-                                onClick={signOut}
+                                onClick={(e) => { e.stopPropagation(); signOut(); }}
                                 title="로그아웃"
                                 style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', color: '#888', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
                                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger-color)'}
