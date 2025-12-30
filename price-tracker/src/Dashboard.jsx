@@ -18,7 +18,7 @@ function Dashboard() {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [activeTab, setActiveTab] = useState('interest');
 
-    const API_BASE_URL = 'http://localhost:3001/api';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
     // Fetch products from backend
     const fetchProducts = async () => {

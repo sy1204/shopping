@@ -28,27 +28,48 @@
 - **`Dashboard.jsx`**: 기존 `App.jsx`의 메인 로직을 이동시킴. 로그인 후 보여지는 메인 화면.
 - **`components/ProtectedRoute.jsx`**: 비로그인 사용자가 대시보드 접근 시 로그인 페이지로 강제 이동.
 
-### 3.2 인증 페이지
-- **`pages/Login.jsx`**: 이메일/비밀번호 로그인 폼.
-- **`pages/Signup.jsx`**: 간편 회원가입 폼.
-
-### 3.3 인증 상태 관리 (`contexts/AuthContext.jsx`)
-- 앱 전역에서 로그인 상태(`user`, `session`)를 공유.
-- 새로고침 해도 로그인이 유지되도록 Supabase 세션 리스너 등록.
+### 3.2 배포 준비 (Deployment Prep)
+- **API URL 환경변수화**: `Dashboard.jsx`의 하드코딩된 URL을 `import.meta.env.VITE_API_URL`로 변경.
+- **.env 설정**: 로컬 개발 시 `VITE_API_URL=http://localhost:3001/api` 사용.
 
 ---
 
-## 4. 실행 및 테스트 방법
+## 4. Vercel 배포 가이드 (Frontend)
+
+### Step 1: GitHub Push
+현재 작업 내용을 GitHub에 모두 Push 했는지 확인하세요.
+
+### Step 2: Vercel 프로젝트 생성
+1. Vercel 대시보드에서 **Add New > Project** 클릭.
+2. `shopping` 리포지토리를 Import.
+
+### Step 3: 배포 설정 (중요)
+- **Framework Preset**: `Vite` (자동 감지됨)
+- **Root Directory**: `price-tracker` (프론트엔드 코드가 있는 폴더 지정 필수!)
+- **Environment Variables**:
+    - `VITE_SUPABASE_URL`: (Supabase Project URL)
+    - `VITE_SUPABASE_ANON_KEY`: (Supabase Anon Key)
+    - `VITE_API_URL`: **(백엔드 배포 주소)**
+        - *주의*: 아직 백엔드를 배포하지 않았다면, 우선 비워두거나 `http://localhost:3001/api`로 두면 배포된 사이트에서 API 통신이 안 됩니다.
+        - 백엔드(Express)도 Render, Railway, Vercel 등에 배포 후 그 주소를 입력해야 합니다.
+
+### Step 4: Deploy
+Deploy 버튼을 누르면 배포가 시작됩니다.
+
+---
+
+## 5. 실행 및 테스트 방법 (로컬)
 
 ### Step 1: Supabase 설정 (필수)
-`price-tracker/.env` 파일을 생성하고 아래 내용을 입력해야 합니다.
+`price-tracker/.env` 생성 후 키 입력.
 ```env
-VITE_SUPABASE_URL=YOUR_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+VITE_API_URL=http://localhost:3001/api
 ```
 
 ### Step 2: DB 업데이트
-Supabase 대시보드 SQL Editor에서 `migrations/01_auth_setup.sql` 내용을 복사하여 실행합니다.
+Supabase SQL Editor에서 마이그레이션 스크립트 실행.
 
 ### Step 3: 서버 재시작
 ```bash
