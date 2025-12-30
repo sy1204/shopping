@@ -112,11 +112,12 @@ app.post('/api/products/:id/price', async (req, res) => {
     const { id } = req.params; // productId (검증용, 실제로는 url로 찾음)
     const { url, price, title, image } = req.body; // Added title, image
 
-    if (!url || !price) return res.status(400).json({ error: 'URL and price are required' });
+    const listPrice = parseInt(price);
+    if (!url || isNaN(listPrice)) return res.status(400).json({ error: 'URL and valid price are required' });
 
-    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${price}원 (Title: ${title ? 'Yes' : 'No'})`);
+    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${listPrice}원 (Title: ${title ? 'Yes' : 'No'})`);
 
-    const result = await savePriceUpdate(url, price, title, image);
+    const result = await savePriceUpdate(url, listPrice, title, image);
 
     if (result.success) {
         res.json({ message: 'Price and info updated successfully', result });
