@@ -296,7 +296,12 @@ async function deleteProduct(id) {
 
 async function updateProduct(id, updates) {
     try {
-        const { error } = await supabase
+        // Use Service Role Key if available to bypass RLS, otherwise default client
+        const client = hasServiceKey
+            ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY)
+            : supabase;
+
+        const { error } = await client
             .from('products')
             .update(updates)
             .eq('id', id);

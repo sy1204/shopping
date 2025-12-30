@@ -5,8 +5,11 @@ import ProductDetail from '../components/ProductDetail';
 import { useAuth } from '../contexts/AuthContext';
 import { X } from 'lucide-react';
 
+import { useNavigate } from 'react-router-dom';
+
 const ManagedProducts = () => {
     const { user, signOut } = useAuth();
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -58,6 +61,39 @@ const ManagedProducts = () => {
         const updated = products.map(p => p.id === selectedProduct.id ? { ...p, alertOptions: newOptions } : p);
         setProducts(updated);
         setSelectedProduct({ ...selectedProduct, alertOptions: newOptions });
+    };
+
+    const updateProductCategory = async (productId, newCategory) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category: newCategory })
+            });
+
+            if (!response.ok) throw new Error('Failed to update category');
+
+            // Optimistic Update
+            const updated = products.map(p =>
+                p.id === productId ? { ...p, category: newCategory } : p
+            );
+
+            setProducts(updated);
+
+            if (newCategory === 'review') {
+                // Navigate back to Main Dashboard
+                setTimeout(() => {
+                    navigate('/'); // Assuming navigate is available
+                }, 500);
+            } else {
+                // Just refresh
+                fetchProducts();
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('상태 변경 실패');
+        }
     };
 
     return (
@@ -131,6 +167,7 @@ const ManagedProducts = () => {
                             onUpdateMemo={updateMemo}
                             onAdjustTargetPrice={adjustTargetPrice}
                             onToggleAlertOption={toggleAlertOption}
+                            onUpdateCategory={updateProductCategory}
                         />
                     </div>
                 </div>

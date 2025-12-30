@@ -73,16 +73,22 @@ const ProductDetail = ({
                         </div>
 
                         {/* Status Change Button */}
-                        {onUpdateCategory && (selectedProduct.category || 'review') === 'review' && (
+                        {onUpdateCategory && (
                             <button
-                                onClick={() => onUpdateCategory(selectedProduct.id, 'managed')}
+                                onClick={() => {
+                                    const isManaged = selectedProduct.category === 'managed';
+                                    onUpdateCategory(selectedProduct.id, isManaged ? 'review' : 'managed');
+                                }}
                                 style={{
-                                    padding: '6px 12px', borderRadius: '8px', border: '1px solid #d97706',
-                                    background: '#fffbeb', color: '#d97706', fontSize: '12px', fontWeight: 'bold',
+                                    padding: '6px 12px', borderRadius: '8px',
+                                    border: selectedProduct.category === 'managed' ? '1px solid #3b82f6' : '1px solid #d97706',
+                                    background: selectedProduct.category === 'managed' ? '#eff6ff' : '#fffbeb',
+                                    color: selectedProduct.category === 'managed' ? '#3b82f6' : '#d97706',
+                                    fontSize: '12px', fontWeight: 'bold',
                                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
                                 }}
                             >
-                                구매완료 (관리로 이동)
+                                {selectedProduct.category === 'managed' ? '구매검토로 복귀' : '구매완료 (관리로 이동)'}
                             </button>
                         )}
                     </div>

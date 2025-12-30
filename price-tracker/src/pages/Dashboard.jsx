@@ -138,10 +138,11 @@ function Dashboard() {
             setProducts(updated);
 
             if (newCategory === 'managed') {
-                setNotification({ message: '물품관리로 이동되었습니다.', type: 'success' });
-                if (selectedProduct?.id === productId) {
-                    setSelectedProduct(null);
-                }
+                setNotification({ message: '물품관리로 이동되었습니다. (페이지 이동)', type: 'success' });
+                // Navigate to managed page after a short delay to let user see the message
+                setTimeout(() => {
+                    navigate('/managed');
+                }, 1000);
             }
 
             // Sync with backend fully
