@@ -264,4 +264,42 @@ async function getProductHistory(productId) {
     }
 }
 
-module.exports = { supabase, saveCrawlResult, saveSearchResults, savePriceUpdate, getProductHistory };
+// --- ADMIN FUNCTIONS ---
+
+async function getAllProducts() {
+    try {
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+async function deleteProduct(id) {
+    try {
+        const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+module.exports = {
+    supabase,
+    saveCrawlResult,
+    saveSearchResults,
+    savePriceUpdate,
+    getProductHistory,
+    getAllProducts,
+    deleteProduct
+};

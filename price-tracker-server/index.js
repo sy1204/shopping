@@ -20,6 +20,21 @@ app.use((req, res, next) => {
 const { supabase, saveCrawlResult, saveSearchResults, savePriceUpdate, getProductHistory } = require('./db');
 const { searchMalls } = require('./crawler');
 const authMiddleware = require('./middleware/auth');
+const { getAllProducts, deleteProduct } = require('./db');
+
+// Admin Middleware
+const adminMiddleware = (req, res, next) => {
+    // 1. Check if authenticated (handled by authMiddleware usually, but double check)
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    // 2. Check Admin Whitelist
+    const ADMIN_EMAILS = ['enrichdotcom@naver.com'];
+    if (!ADMIN_EMAILS.includes(req.user.email)) {
+        console.warn(`⛔ [Admin] Access denied for user: ${req.user.email}`);
+        return res.status(403).json({ error: 'Forbidden: Admin access only' });
+    }
+    next();
+};
 
 // Routes
 app.get('/', (req, res) => {
@@ -138,6 +153,46 @@ app.get('/api/products/:id/history', async (req, res) => {
         res.json({ history: result.links });
     } else {
         res.status(500).json({ error: 'Failed to fetch history', details: result.error });
+    }
+});
+
+// --- ADMIN ROUTES ---
+app.get('/api/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
+    const result = await getAllProducts();
+    if (result.success) {
+        res.json(result.data);
+    } else {
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
+});
+
+app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const result = await deleteProduct(id);
+    if (result.success) {
+        res.json({ message: 'Product deleted' });
+    } else {
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
+// --- ADMIN ROUTES ---
+app.get('/api/admin/products', authMiddleware, adminMiddleware, async (req, res) => {
+    const result = await getAllProducts();
+    if (result.success) {
+        res.json(result.data);
+    } else {
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
+});
+
+app.delete('/api/admin/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params;
+    const result = await deleteProduct(id);
+    if (result.success) {
+        res.json({ message: 'Product deleted' });
+    } else {
+        res.status(500).json({ error: 'Failed to delete product' });
     }
 });
 
