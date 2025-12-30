@@ -119,6 +119,40 @@ function Dashboard() {
         setSelectedProduct({ ...selectedProduct, alertOptions: newOptions });
     };
 
+    const updateProductCategory = async (productId, newCategory) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category: newCategory })
+            });
+
+            if (!response.ok) throw new Error('Failed to update category');
+
+            const updated = products.map(p =>
+                p.id === productId ? { ...p, category: newCategory } : p
+            );
+
+            // If moved to 'managed', remove from current view if it's 'review' only
+            // But doing it via state update is safer
+            setProducts(updated);
+
+            if (newCategory === 'managed') {
+                setNotification({ message: '물품관리로 이동되었습니다.', type: 'success' });
+                if (selectedProduct?.id === productId) {
+                    setSelectedProduct(null);
+                }
+            }
+
+            // Sync with backend fully
+            fetchProducts();
+
+        } catch (error) {
+            console.error(error);
+            setNotification({ message: '상태 변경 실패', type: 'error' });
+        }
+    };
+
     // Helper for List Item
     const getPrimaryMallData = (product) => {
         if (!product || !product.malls || product.malls.length === 0) return null;
@@ -216,6 +250,7 @@ function Dashboard() {
                         onUpdateMemo={updateMemo}
                         onAdjustTargetPrice={adjustTargetPrice}
                         onToggleAlertOption={toggleAlertOption}
+                        onUpdateCategory={updateProductCategory}
                     />
                 </div>
             </div>
