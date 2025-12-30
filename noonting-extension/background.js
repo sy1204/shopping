@@ -34,9 +34,11 @@ async function startSyncProcess() {
         // 2. 각 URL을 백그라운드 탭으로 열기
         // 너무 한꺼번에 열면 브라우저가 느려지므로 순차적으로 열거나 제한을 둠.
         // 여기서는 간단히 3초 간격으로 엽니다.
-        const urls = Array.from(urlsToTrack);
-        let index = 0;
+        // const urls = Array.from(urlsToTrack);
+        // let index = 0;
 
+        console.log('⚠️ Auto-sync disabled for local testing to prevent window spam.');
+        /*
         const interval = setInterval(() => {
             if (index >= urls.length) {
                 clearInterval(interval);
@@ -48,6 +50,7 @@ async function startSyncProcess() {
             openTabForUrl(url);
             index++;
         }, 3000); // 3 seconds delay
+        */
 
     } catch (error) {
         console.error('❌ Failed to fetch products:', error);
