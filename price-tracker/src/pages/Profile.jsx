@@ -47,6 +47,9 @@ function Profile() {
         day: 'numeric'
     });
 
+    // Admin Check
+    const isAdmin = user.email === 'enrichdotcom@naver.com';
+
     return (
         <div className="container" style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem 1rem' }}>
             <button
@@ -82,7 +85,9 @@ function Profile() {
                             <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <Shield size={14} /> 계정 등급
                             </div>
-                            <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--accent-color)' }}>Personal</div>
+                            <div style={{ fontSize: '24px', fontWeight: '800', color: isAdmin ? '#3b82f6' : 'var(--accent-color)' }}>
+                                {isAdmin ? 'Admin' : 'Personal'}
+                            </div>
                         </div>
                     </div>
 
@@ -105,6 +110,24 @@ function Profile() {
 
                     <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '0.5rem' }}>계정 관리</h3>
+
+                        {/* Admin Link */}
+                        {isAdmin && (
+                            <button
+                                onClick={() => navigate('/admin')}
+                                style={{ width: '100%', padding: '1rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '0.5rem' }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#dbeafe'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = '#eff6ff'}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div style={{ width: '36px', height: '36px', background: '#3b82f6', color: 'white', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Shield size={18} />
+                                    </div>
+                                    <span style={{ fontWeight: '600', fontSize: '15px', color: '#1e40af' }}>관리자 대시보드 접속</span>
+                                </div>
+                                <ChevronRight size={18} color="#93c5fd" />
+                            </button>
+                        )}
 
                         <button
                             onClick={() => alert('비밀번호 재설정 링크가 이메일로 전송되었습니다. (DEMO)')}

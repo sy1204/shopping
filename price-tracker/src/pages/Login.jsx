@@ -14,7 +14,11 @@ const Login = () => {
         try {
             const { error } = await signIn({ email, password });
             if (error) throw error;
-            navigate('/');
+            if (email === 'enrichdotcom@naver.com') {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (error) {
             setError(error.message);
         }
