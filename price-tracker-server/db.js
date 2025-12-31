@@ -177,14 +177,14 @@ async function saveSearchResults(searchQuery, results) {
  */
 /**
  * URL 기반으로 가격 정보를 업데이트하고 이력을 저장함 (Extension용)
- * Optionally updates Product Title/Image/Description if they are placeholders.
+ * Optionally updates Product Title/Image/Description/DetailImages if they are placeholders.
  */
-async function savePriceUpdate(url, price, title = null, image = null, description = null) {
+async function savePriceUpdate(url, price, title = null, image = null, description = null, detailImages = null) {
     try {
         // 1. 링크 정보 조회
         const { data: link, error: linkError } = await supabase
             .from('product_links')
-            .select('id, product_id, products(title, represent_image, description)') // Link to Product
+            .select('id, product_id, products(title, represent_image, description, detail_images)') // Link to Product
             .eq('url', url)
             .single();
 
@@ -207,18 +207,26 @@ async function savePriceUpdate(url, price, title = null, image = null, descripti
 
         if (updateError) throw updateError;
 
-        // 4. (Self-Healing) 상품 정보 업데이트 (제목/이미지/설명이 없거나 Placeholder인 경우)
-        if (title || image || description) {
+        // 4. (Self-Healing) 상품 정보 업데이트 (제목/이미지/설명/상세이미지가 없거나 Placeholder인 경우)
+        if (title || image || description || (detailImages && detailImages.length > 0)) {
             const currentTitle = link.products?.title;
             const currentImage = link.products?.represent_image;
             const currentDesc = link.products?.description;
-            const needsUpdate = (currentTitle === '상품 정보를 가져오는 중...' || !currentTitle) || (!currentImage) || (!currentDesc && description);
+            const currentDetailImages = link.products?.detail_images;
+            const needsUpdate = (currentTitle === '상품 정보를 가져오는 중...' || !currentTitle) ||
+                (!currentImage) ||
+                (!currentDesc && description) ||
+                (!currentDetailImages && detailImages && detailImages.length > 0);
 
             if (needsUpdate) {
                 const updateData = {};
                 if (title && (!currentTitle || currentTitle === '상품 정보를 가져오는 중...')) updateData.title = title;
                 if (image && !currentImage) updateData.represent_image = image;
                 if (description && !currentDesc) updateData.description = description;
+                if (detailImages && detailImages.length > 0 && !currentDetailImages) {
+                    updateData.detail_images = detailImages; // Store as JSON array
+                    console.log(`📸 Saving ${detailImages.length} detail images for product ${link.product_id}`);
+                }
 
                 if (Object.keys(updateData).length > 0) {
                     await supabase

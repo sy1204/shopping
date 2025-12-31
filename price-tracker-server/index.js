@@ -159,14 +159,14 @@ app.post('/api/products', async (req, res) => {
 // 3. 가격 업데이트 API (For Extension)
 app.post('/api/products/:id/price', async (req, res) => {
     const { id } = req.params; // productId (검증용, 실제로는 url로 찾음)
-    const { url, price, title, image, description } = req.body; // Added description
+    const { url, price, title, image, description, detailImages } = req.body;
 
     const listPrice = parseInt(price);
     if (!url || isNaN(listPrice)) return res.status(400).json({ error: 'URL and valid price are required' });
 
-    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${listPrice}원 (Title: ${title ? 'Yes' : 'No'}, Desc: ${description ? 'Yes' : 'No'})`);
+    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${listPrice}원 (Title: ${title ? 'Yes' : 'No'}, Desc: ${description ? 'Yes' : 'No'}, Images: ${detailImages?.length || 0})`);
 
-    const result = await savePriceUpdate(url, listPrice, title, image, description);
+    const result = await savePriceUpdate(url, listPrice, title, image, description, detailImages);
 
     if (result.success) {
         res.json({ message: 'Price and info updated successfully', result });
@@ -316,6 +316,7 @@ app.get('/api/products', async (req, res) => {
             targetPrice: p.target_price || 0,
             memo: p.memo || "",
             description: p.description || "",
+            detailImages: p.detail_images || [],
             alertOptions: p.alert_options || {},
             specs: [],
             malls: p.product_links.map(link => ({

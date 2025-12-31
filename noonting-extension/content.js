@@ -160,8 +160,8 @@ function checkPrice() {
             if (element) price = parsePrice(element.innerText);
         }
 
-        // --- Common: Description Extraction ---
-        // Try og:description first
+        // --- Common: Description & Detail Images Extraction ---
+        // 1. Try og:description first (brief summary only)
         if (!description) {
             const ogDesc = document.querySelector('meta[property="og:description"]');
             description = ogDesc?.content || null;
@@ -171,11 +171,41 @@ function checkPrice() {
             description = metaDesc?.content || null;
         }
 
+        // 2. Extract detail images (for Naver Smart Store)
+        let detailImages = [];
+        if (hostname.includes('naver.com')) {
+            // Selectors for detail content
+            const detailSelectors = [
+                '.se-main-container img',
+                '.se-image img',
+                '[class*="detail"] img',
+                '.product_detail_container img',
+                '#INTRODUCE img'
+            ];
+
+            for (const sel of detailSelectors) {
+                const imgs = document.querySelectorAll(sel);
+                if (imgs.length > 0) {
+                    detailImages = Array.from(imgs)
+                        .map(img => img.src || img.dataset?.src)
+                        .filter(src => src && !src.startsWith('data:') && src.length > 10)
+                        .slice(0, 10); // Max 10 images
+                    if (detailImages.length > 0) {
+                        console.log(`📸 [Noonting] Found ${detailImages.length} detail images`);
+                        break;
+                    }
+                }
+            }
+        }
+
         // 가격을 찾았으면 전송
         if (price && price > 0) {
             console.log(`✅ [Noonting] Price found: ${price} (${mallName})`);
             if (description) {
                 console.log(`📝 [Noonting] Description: ${description.substring(0, 100)}...`);
+            }
+            if (detailImages.length > 0) {
+                console.log(`📸 [Noonting] Detail Images: ${detailImages.length} found`);
             }
             chrome.runtime.sendMessage({
                 type: 'PRICE_FOUND',
@@ -185,7 +215,8 @@ function checkPrice() {
                     mall: mallName,
                     title: title,
                     image: image,
-                    description: description
+                    description: description,
+                    detailImages: detailImages
                 }
             });
             return true; // Found!

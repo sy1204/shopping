@@ -285,14 +285,44 @@ const ProductDetail = ({
                 )}
             </div>
 
-            {/* 4. BOTTOM SECTION: Product Description (Crawled) */}
+            {/* 4. BOTTOM SECTION: Product Description / Images (Crawled) */}
             <div style={{ padding: '1.5rem', border: '1px solid #f0f0f0', borderRadius: '16px', background: '#fafafa' }}>
                 <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    📦 상품 설명 (크롤링)
+                    📦 상품 상세 정보 (크롤링)
                 </div>
-                <div style={{ fontSize: '13px', color: selectedProduct.description ? '#555' : '#aaa', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-                    {selectedProduct.description || "상품 링크를 방문하면 확장프로그램이 설명을 자동으로 수집합니다."}
-                </div>
+
+                {/* Detail Images Gallery */}
+                {selectedProduct.detailImages && selectedProduct.detailImages.length > 0 ? (
+                    <div style={{
+                        maxHeight: '400px',
+                        overflowY: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        padding: '8px',
+                        background: '#fff',
+                        borderRadius: '8px',
+                        border: '1px solid #eee'
+                    }}>
+                        {selectedProduct.detailImages.map((imgUrl, idx) => (
+                            <img
+                                key={idx}
+                                src={imgUrl}
+                                alt={`상세이미지 ${idx + 1}`}
+                                style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    borderRadius: '4px'
+                                }}
+                                loading="lazy"
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{ fontSize: '13px', color: '#aaa', lineHeight: 1.7 }}>
+                        {selectedProduct.description || "상품 링크를 방문하면 확장프로그램이 상세 정보를 자동으로 수집합니다."}
+                    </div>
+                )}
             </div>
         </div>
     );
