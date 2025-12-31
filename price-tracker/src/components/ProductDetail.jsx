@@ -55,7 +55,6 @@ const ProductDetail = ({
     };
 
     return (
-    return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
 
             {/* 1. TOP SECTION: Chart (Left) + Controls (Right) */}
