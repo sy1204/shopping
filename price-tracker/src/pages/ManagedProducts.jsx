@@ -8,18 +8,22 @@ import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ManagedProducts = () => {
-    const { user, signOut } = useAuth();
+    const { user, session, signOut } = useAuth();
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    const API_BASE_URL = 'http://localhost:3001/api';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/products`);
+            const response = await fetch(`${API_BASE_URL}/products`, {
+                headers: {
+                    'Authorization': session?.access_token ? `Bearer ${session.access_token}` : ''
+                }
+            });
             if (!response.ok) throw new Error('Failed to fetch products');
             const data = await response.json();
 
@@ -67,7 +71,10 @@ const ManagedProducts = () => {
         try {
             const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': session?.access_token ? `Bearer ${session.access_token}` : ''
+                },
                 body: JSON.stringify({ category: newCategory })
             });
 

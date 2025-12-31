@@ -277,7 +277,7 @@ const AdminDashboard = () => {
                                 onClick={() => setProductFilter('managed')}
                                 style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #10b981', background: productFilter === 'managed' ? '#10b981' : 'white', color: productFilter === 'managed' ? 'white' : '#059669', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}
                             >
-                                <CheckCircle size={12} /> 관리대상
+                                <CheckCircle size={12} /> 물품관리
                             </button>
                         </div>
 
@@ -308,7 +308,7 @@ const AdminDashboard = () => {
                                                 }}
                                             >
                                                 <option value="review">구매검토</option>
-                                                <option value="managed">관리대상</option>
+                                                <option value="managed">물품관리</option>
                                             </select>
                                         </td>
                                         <td style={{ padding: '12px', textAlign: 'center' }}>
