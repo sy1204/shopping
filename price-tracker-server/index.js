@@ -284,8 +284,10 @@ app.get('/api/products', async (req, res) => {
             id: p.id,
             name: p.title,
             image: p.represent_image,
-            targetPrice: 0, // 기본값 (DB에 컬럼 추가 필요할 수 있음)
-            memo: "",
+            category: p.category,
+            targetPrice: p.target_price || 0,
+            memo: p.memo || "",
+            alertOptions: p.alert_options || {},
             specs: [],
             malls: p.product_links.map(link => ({
                 name: link.mall_name,
