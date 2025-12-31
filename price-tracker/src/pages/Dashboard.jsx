@@ -7,7 +7,7 @@ import Header from '../components/Header';
 import ProductDetail from '../components/ProductDetail';
 
 function Dashboard() {
-    const { user, signOut } = useAuth();
+    const { user, session, signOut } = useAuth();
     const navigate = useNavigate();
 
     const [products, setProducts] = useState([]);
@@ -64,7 +64,10 @@ function Dashboard() {
         try {
             const response = await fetch(`${API_BASE_URL}/products`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': session?.access_token ? `Bearer ${session.access_token}` : ''
+                },
                 body: JSON.stringify({ url })
             });
             if (!response.ok) throw new Error('Failed to register product');
@@ -123,7 +126,10 @@ function Dashboard() {
         try {
             const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': session?.access_token ? `Bearer ${session.access_token}` : ''
+                },
                 body: JSON.stringify({ category: newCategory })
             });
 

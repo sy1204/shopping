@@ -9,6 +9,8 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [session, setSession] = useState(null);
+
     useEffect(() => {
         let mounted = true;
 
@@ -16,10 +18,12 @@ export const AuthProvider = ({ children }) => {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (error) throw error;
-                if (mounted) setUser(session?.user ?? null);
+                if (mounted) {
+                    setSession(session);
+                    setUser(session?.user ?? null);
+                }
             } catch (err) {
                 console.error("Auth checking error:", err);
-                // Even if error, we stop loading to let app render (redirect to login)
             } finally {
                 if (mounted) setLoading(false);
             }
@@ -29,12 +33,12 @@ export const AuthProvider = ({ children }) => {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (mounted) {
+                setSession(session);
                 setUser(session?.user ?? null);
                 setLoading(false);
             }
         });
 
-        // Safety timeout in case Supabase hangs
         const timeoutId = setTimeout(() => {
             if (mounted && loading) {
                 console.warn("Auth check timed out, forcing render.");
@@ -54,6 +58,7 @@ export const AuthProvider = ({ children }) => {
         signIn: (data) => supabase.auth.signInWithPassword(data),
         signOut: () => supabase.auth.signOut(),
         user,
+        session
     };
 
     return (
