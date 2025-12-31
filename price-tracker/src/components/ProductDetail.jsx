@@ -57,7 +57,62 @@ const ProductDetail = ({
     return (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%' }}>
 
-            {/* 1. TOP SECTION: Chart (Left) + Controls (Right) */}
+            {/* 1. TOP SECTION: Product Info (Summary) */}
+            <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '16px', background: 'white' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', marginBottom: '12px' }}>상품 정보</div>
+                <div style={{ display: 'flex', gap: '2rem' }}>
+                    <div style={{ width: '100px', height: '100px', padding: '5px', border: '1px solid #eee', borderRadius: '12px', flexShrink: 0 }}>
+                        <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ background: '#f3f4f6', color: '#666', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
+                                        {primaryMallData?.name || 'Unknown'}
+                                    </span>
+                                    <a href={primaryMallData?.url || '#'} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#3b82f6', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                        상품 보러가기 <ExternalLink size={12} />
+                                    </a>
+                                </div>
+                                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111', margin: '4px 0', lineHeight: 1.3 }}>
+                                    {selectedProduct.name}
+                                </h2>
+                            </div>
+
+                            {/* Status Change Button */}
+                            {onUpdateCategory && (
+                                <button
+                                    onClick={() => {
+                                        const isManaged = selectedProduct.category === 'managed';
+                                        onUpdateCategory(selectedProduct.id, isManaged ? 'review' : 'managed');
+                                    }}
+                                    style={{
+                                        padding: '8px 16px', borderRadius: '8px',
+                                        border: selectedProduct.category === 'managed' ? '1px solid #3b82f6' : '1px solid #d97706',
+                                        background: selectedProduct.category === 'managed' ? '#eff6ff' : '#fffbeb',
+                                        color: selectedProduct.category === 'managed' ? '#3b82f6' : '#d97706',
+                                        fontSize: '13px', fontWeight: 'bold',
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                >
+                                    {selectedProduct.category === 'managed' ? '구매검토로 복귀' : '물품관리로 이동'}
+                                </button>
+                            )}
+                        </div>
+
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                            <span style={{ fontSize: '28px', fontWeight: '800', color: '#111' }}>
+                                {primaryMallData?.price.toLocaleString() || 0}
+                            </span>
+                            <span style={{ fontSize: '16px', color: '#666' }}>원</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. MIDDLE SECTION: Chart (Left) + Controls (Right) */}
             <div style={{ display: 'flex', gap: '1.5rem', minHeight: '320px' }}>
                 {/* Left: Chart (Flex 2) */}
                 <div style={{ flex: 2, background: '#fafafa', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
@@ -132,7 +187,7 @@ const ProductDetail = ({
                 </div>
             </div>
 
-            {/* 2. MIDDLE SECTION: Memo */}
+            {/* 3. BOTTOM SECTION: Memo */}
             <div style={{ padding: '1.5rem', border: '1px solid #f0f0f0', borderRadius: '16px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -157,61 +212,6 @@ const ProductDetail = ({
                         {selectedProduct.memo || "메모가 없습니다."}
                     </div>
                 )}
-            </div>
-
-            {/* 3. BOTTOM SECTION: Product Info (Original Header) */}
-            <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '16px', background: 'white' }}>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', marginBottom: '12px' }}>상품 정보</div>
-                <div style={{ display: 'flex', gap: '2rem' }}>
-                    <div style={{ width: '100px', height: '100px', padding: '5px', border: '1px solid #eee', borderRadius: '12px', flexShrink: 0 }}>
-                        <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ background: '#f3f4f6', color: '#666', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
-                                        {primaryMallData?.name || 'Unknown'}
-                                    </span>
-                                    <a href={primaryMallData?.url || '#'} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#3b82f6', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                                        상품 보러가기 <ExternalLink size={12} />
-                                    </a>
-                                </div>
-                                <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111', margin: '4px 0', lineHeight: 1.3 }}>
-                                    {selectedProduct.name}
-                                </h2>
-                            </div>
-
-                            {/* Status Change Button */}
-                            {onUpdateCategory && (
-                                <button
-                                    onClick={() => {
-                                        const isManaged = selectedProduct.category === 'managed';
-                                        onUpdateCategory(selectedProduct.id, isManaged ? 'review' : 'managed');
-                                    }}
-                                    style={{
-                                        padding: '8px 16px', borderRadius: '8px',
-                                        border: selectedProduct.category === 'managed' ? '1px solid #3b82f6' : '1px solid #d97706',
-                                        background: selectedProduct.category === 'managed' ? '#eff6ff' : '#fffbeb',
-                                        color: selectedProduct.category === 'managed' ? '#3b82f6' : '#d97706',
-                                        fontSize: '13px', fontWeight: 'bold',
-                                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {selectedProduct.category === 'managed' ? '구매검토로 복귀' : '물품관리로 이동'}
-                                </button>
-                            )}
-                        </div>
-
-                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                            <span style={{ fontSize: '28px', fontWeight: '800', color: '#111' }}>
-                                {primaryMallData?.price.toLocaleString() || 0}
-                            </span>
-                            <span style={{ fontSize: '16px', color: '#666' }}>원</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
