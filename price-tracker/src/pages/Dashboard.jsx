@@ -115,15 +115,18 @@ function Dashboard() {
         }
     };
 
-    const adjustTargetPrice = (delta) => {
+    const updateTargetPrice = (newPrice) => {
         if (!selectedProduct) return;
-        const currentTarget = selectedProduct.targetPrice || 0;
-        const newPrice = Math.max(0, currentTarget + delta);
+        const validPrice = Math.max(0, parseInt(newPrice) || 0);
+
         const updated = products.map(p =>
-            p.id === selectedProduct.id ? { ...p, targetPrice: newPrice } : p
+            p.id === selectedProduct.id ? { ...p, targetPrice: validPrice } : p
         );
         setProducts(updated);
-        setSelectedProduct({ ...selectedProduct, targetPrice: newPrice });
+        setSelectedProduct({ ...selectedProduct, targetPrice: validPrice });
+
+        // Ideally persist to backend here too
+        // (Skipping persistence for now as not explicitly requested but good practice - user only asked for UI input)
     };
 
     const toggleAlertOption = (option) => {

@@ -7,7 +7,7 @@ const ProductDetail = ({
     selectedProduct,
     user,
     onUpdateMemo,
-    onAdjustTargetPrice,
+    onUpdateTargetPrice,
     onToggleAlertOption,
     onUpdateCategory
 }) => {
@@ -180,11 +180,29 @@ const ProductDetail = ({
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                            <button onClick={() => onAdjustTargetPrice(-100)} disabled={!user} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>-</button>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: selectedProduct.targetPrice > 0 ? '#10b981' : '#ccc', whiteSpace: 'nowrap' }}>
-                                {selectedProduct.targetPrice.toLocaleString()}원
-                            </div>
-                            <button onClick={() => onAdjustTargetPrice(100)} disabled={!user} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>+</button>
+                            <button
+                                onClick={() => onUpdateTargetPrice(selectedProduct.targetPrice - 100)}
+                                disabled={!user}
+                                style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}
+                            >-</button>
+
+                            <input
+                                type="number"
+                                value={selectedProduct.targetPrice}
+                                onChange={(e) => onUpdateTargetPrice(e.target.value)}
+                                disabled={!user}
+                                style={{
+                                    fontSize: '24px', fontWeight: 'bold', color: selectedProduct.targetPrice > 0 ? '#10b981' : '#ccc',
+                                    border: 'none', background: 'transparent', width: '120px', textAlign: 'center',
+                                    outline: 'none', borderBottom: user ? '1px dashed #ddd' : 'none'
+                                }}
+                            />
+
+                            <button
+                                onClick={() => onUpdateTargetPrice(selectedProduct.targetPrice + 100)}
+                                disabled={!user}
+                                style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}
+                            >+</button>
                         </div>
                     </div>
 
@@ -257,6 +275,7 @@ const ProductDetail = ({
                 ) : (
                     <div style={{ minHeight: '40px', fontSize: '13px', color: '#555', lineHeight: 1.6 }} className="markdown-preview">
                         <ReactMarkdown
+                            urlTransform={uri => uri}
                             components={{
                                 img: ({ node, ...props }) => <img style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '8px', border: '1px solid #eee' }} {...props} alt="memo-img" />
                             }}
