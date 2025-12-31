@@ -1,7 +1,7 @@
-
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { ExternalLink, Bell, StickyNote } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, CartesianGrid } from 'recharts';
+import { ExternalLink, Bell, StickyNote, Image as ImageIcon } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const ProductDetail = ({
     selectedProduct,
@@ -20,6 +20,7 @@ const ProductDetail = ({
 
     const [isEditingMemo, setIsEditingMemo] = React.useState(false);
     const [tempMemo, setTempMemo] = React.useState("");
+    const fileInputRef = React.useRef(null);
 
     React.useEffect(() => {
         if (selectedProduct) {
@@ -52,6 +53,25 @@ const ProductDetail = ({
     const handleEditMemo = () => {
         setTempMemo(selectedProduct.memo || "");
         setIsEditingMemo(true);
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Simple check for size (e.g. limit to 1MB to avoid horrible performance)
+        if (file.size > 1024 * 1024) {
+            alert("이미지 크기가 1MB를 초과하여 첨부할 수 없습니다.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result;
+            // Append markdown image syntax to the current cursor position or end
+            setTempMemo(prev => prev + `\n\n![image](${base64String}) \n`);
+        };
+        reader.readAsDataURL(file);
     };
 
     return (
@@ -119,12 +139,24 @@ const ProductDetail = ({
                     <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#666', marginBottom: '1rem' }}>가격 변동 추이</div>
                     <div style={{ flex: 1, minHeight: 0 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={primaryMallData?.histories || []}>
-                                <XAxis dataKey="date" hide />
-                                <YAxis domain={['auto', 'auto']} orientation="right" tick={{ fontSize: 12, fill: '#aaa' }} />
+                            <LineChart data={primaryMallData?.histories || []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
+                                <XAxis
+                                    dataKey="date"
+                                    tick={{ fontSize: 11, fill: '#aaa' }}
+                                    tickFormatter={(str) => str ? str.substring(5, 10) : ''}
+                                    label={{ value: '날짜', position: 'insideBottomRight', offset: -5, fontSize: 12, fill: '#aaa' }}
+                                />
+                                <YAxis
+                                    domain={['auto', 'auto']}
+                                    orientation="left"
+                                    tick={{ fontSize: 11, fill: '#aaa' }}
+                                    label={{ value: '가격', angle: -90, position: 'insideLeft', fontSize: 12, fill: '#aaa' }}
+                                />
                                 <Tooltip
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                    formatter={(val) => [`${val.toLocaleString()}원`, '가격']}
+                                    formatter={(val) => [`${val.toLocaleString()} 원`, '가격']}
+                                    labelFormatter={(label) => label ? label.substring(0, 10) : ''}
                                 />
                                 <ReferenceLine y={selectedProduct.targetPrice} stroke="#10b981" strokeDasharray="3 3" label={{ position: 'right', value: '목표가', fill: '#10b981', fontSize: 12 }} />
                                 <Line type="monotone" dataKey="price" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
@@ -138,9 +170,9 @@ const ProductDetail = ({
 
                     {/* Target Price */}
                     <div style={{ flex: 1, padding: '1.5rem', border: '1px solid #f0f0f0', borderRadius: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                            <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333' }}>목표 가격 설정</div>
-                            <div style={{ fontSize: '12px', color: '#888' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'nowrap' }}>
+                            <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333', whiteSpace: 'nowrap' }}>목표 가격 설정</div>
+                            <div style={{ fontSize: '12px', color: '#888', whiteSpace: 'nowrap', marginLeft: '8px' }}>
                                 현재가 대비 <span style={{ color: currentPrice <= selectedProduct.targetPrice ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
                                     {currentPrice > 0 ? Math.round(((selectedProduct.targetPrice - currentPrice) / currentPrice) * 100) : 0}%
                                 </span>
@@ -149,7 +181,7 @@ const ProductDetail = ({
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
                             <button onClick={() => onAdjustTargetPrice(-100)} disabled={!user} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>-</button>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: selectedProduct.targetPrice > 0 ? '#10b981' : '#ccc' }}>
+                            <div style={{ fontSize: '24px', fontWeight: 'bold', color: selectedProduct.targetPrice > 0 ? '#10b981' : '#ccc', whiteSpace: 'nowrap' }}>
                                 {selectedProduct.targetPrice.toLocaleString()}원
                             </div>
                             <button onClick={() => onAdjustTargetPrice(100)} disabled={!user} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>+</button>
@@ -168,9 +200,9 @@ const ProductDetail = ({
                                     checked={selectedProduct.alertOptions?.targetHit !== false}
                                     onChange={() => onToggleAlertOption('targetHit')}
                                     disabled={!user}
-                                    style={{ accentColor: '#3b82f6' }}
+                                    style={{ accentColor: '#3b82f6', width: '16px', height: '16px' }}
                                 />
-                                목표가 도달 시 알림
+                                <span>목표가 도달 시 알림</span>
                             </label>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>
                                 <input
@@ -178,9 +210,9 @@ const ProductDetail = ({
                                     checked={selectedProduct.alertOptions?.priceDrop !== false}
                                     onChange={() => onToggleAlertOption('priceDrop')}
                                     disabled={!user}
-                                    style={{ accentColor: '#3b82f6' }}
+                                    style={{ accentColor: '#3b82f6', width: '16px', height: '16px' }}
                                 />
-                                가격 하락 시 알림 (전일 대비)
+                                <span>가격 하락 시 알림 (전일 대비)</span>
                             </label>
                         </div>
                     </div>
@@ -194,7 +226,22 @@ const ProductDetail = ({
                         <StickyNote size={16} /> 나의 메모
                     </div>
                     {isEditingMemo ? (
-                        <button onClick={handleSaveMemo} style={{ fontSize: '12px', fontWeight: 'bold', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>저장</button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current.click()}
+                                style={{ fontSize: '12px', fontWeight: 'bold', color: '#666', background: '#f3f4f6', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                                <ImageIcon size={12} /> 사진추가
+                            </button>
+                            <button onClick={handleSaveMemo} style={{ fontSize: '12px', fontWeight: 'bold', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>저장</button>
+                        </div>
                     ) : (
                         <button onClick={handleEditMemo} disabled={!user} style={{ fontSize: '12px', color: '#888', background: 'none', border: 'none', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>수정</button>
                     )}
@@ -204,12 +251,18 @@ const ProductDetail = ({
                     <textarea
                         value={tempMemo}
                         onChange={(e) => setTempMemo(e.target.value)}
-                        style={{ width: '100%', minHeight: '80px', borderRadius: '8px', border: '1px solid #ddd', padding: '10px', resize: 'vertical', fontSize: '13px', fontFamily: 'inherit' }}
-                        placeholder="상품에 대한 메모를 남겨보세요."
+                        style={{ width: '100%', minHeight: '120px', borderRadius: '8px', border: '1px solid #ddd', padding: '10px', resize: 'vertical', fontSize: '13px', fontFamily: 'inherit' }}
+                        placeholder="상품에 대한 메모를 남겨보세요. 이미지도 붙여넣을 수 있습니다."
                     />
                 ) : (
-                    <div style={{ minHeight: '40px', fontSize: '13px', color: '#555', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-                        {selectedProduct.memo || "메모가 없습니다."}
+                    <div style={{ minHeight: '40px', fontSize: '13px', color: '#555', lineHeight: 1.6 }} className="markdown-preview">
+                        <ReactMarkdown
+                            components={{
+                                img: ({ node, ...props }) => <img style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '8px', border: '1px solid #eee' }} {...props} alt="memo-img" />
+                            }}
+                        >
+                            {selectedProduct.memo || "메모가 없습니다."}
+                        </ReactMarkdown>
                     </div>
                 )}
             </div>
