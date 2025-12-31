@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react'
-import { Plus, X } from 'lucide-react';
+import { Plus, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
@@ -205,6 +205,20 @@ function Dashboard() {
                             </button>
                         </div>
                     </div>
+
+                    <button
+                        onClick={() => {
+                            window.postMessage({ type: 'TRIGGER_SYNC' }, '*');
+                            setNotification({ message: '가격 동기화를 시작합니다. (새 탭이 열렸다가 닫힙니다)', type: 'info' });
+                        }}
+                        style={{
+                            width: '100%', padding: '10px', background: 'white', border: '1px solid #ddd', borderRadius: '12px',
+                            color: '#555', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        <RefreshCw size={16} /> 전체 가격 업데이트
+                    </button>
 
                     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
                         <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px', paddingLeft: '4px' }}>

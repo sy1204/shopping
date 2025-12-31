@@ -309,6 +309,9 @@ async function updateProduct(id, updates) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
+        if (!hasServiceKey) {
+            console.warn("⚠️ [DB] Update failed and SUPABASE_SERVICE_ROLE_KEY is missing. RLS might be blocking this.");
+        }
         return { success: false, error: error.message };
     }
 }

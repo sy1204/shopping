@@ -1,13 +1,24 @@
 
 // 1. 대시보드(메인 앱) 감지 -> 동기화 시작 트리거
 if (window.location.hostname.includes('shopping-sy1204s-projects.vercel.app') || window.location.hostname.includes('localhost')) {
-    console.log('👀 Noonting Dashboard detected. Triggering Sync...');
+    console.log('👀 Noonting Dashboard detected. Ready for Sync.');
 
+    // 1. Initial Sync on Load
     window.addEventListener('load', () => {
         chrome.runtime.sendMessage({ type: 'START_SYNC' }, (response) => {
             console.log('✅ Sync started:', response);
         });
     });
+
+    // 2. On-Demand Sync via Button
+    window.addEventListener('message', (event) => {
+        if (event.source !== window) return;
+        if (event.data.type && (event.data.type === 'TRIGGER_SYNC')) {
+            console.log('🔄 Triggering Manual Sync...');
+            chrome.runtime.sendMessage({ type: 'SYNC_NOW' });
+        }
+    });
+
 }
 // 2. 쇼핑몰 감지 및 가격 추출
 else {
@@ -57,7 +68,9 @@ function checkPrice() {
         if (hostname.includes('coupang.com')) {
             mallName = 'Coupang';
             const element = document.querySelector('span.total-price > strong') ||
-                document.querySelector('.prod-sale-price .total-price > strong');
+                document.querySelector('.prod-sale-price .total-price > strong') ||
+                document.querySelector('span.price-value') ||
+                document.querySelector('.sales-price .price');
             if (element) price = parsePrice(element.innerText);
         }
 

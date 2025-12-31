@@ -1,8 +1,9 @@
 const API_BASE_URL = 'http://localhost:3001/api';
 
 // 1. 메인 앱(대시보드) 접속 시 동기화 시작
+// 1. 메인 앱(대시보드) 접속 시 동기화 시작
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === 'START_SYNC') {
+    if (request.type === 'START_SYNC' || request.type === 'SYNC_NOW') {
         startSyncProcess();
         sendResponse({ status: 'started' });
     } else if (request.type === 'PRICE_FOUND') {
@@ -19,7 +20,7 @@ async function startSyncProcess() {
         const response = await fetch(`${API_BASE_URL}/products`);
         const products = await response.json();
 
-        // URL만 추출 (중복 제거)
+        // URL만 추출 (중복 제거 & http만)
         const urlsToTrack = new Set();
         products.forEach(p => {
             p.malls.forEach(m => {
@@ -31,36 +32,46 @@ async function startSyncProcess() {
 
         console.log(`📋 Found ${urlsToTrack.size} URLs to track.`);
 
-        // 2. 각 URL을 백그라운드 탭으로 열기
-        // 너무 한꺼번에 열면 브라우저가 느려지므로 순차적으로 열거나 제한을 둠.
-        // 여기서는 간단히 3초 간격으로 엽니다.
-        // const urls = Array.from(urlsToTrack);
-        // let index = 0;
-
-        console.log('⚠️ Auto-sync disabled for local testing to prevent window spam.');
-        /*
-        const interval = setInterval(() => {
-            if (index >= urls.length) {
-                clearInterval(interval);
-                console.log('✅ All tabs opened.');
-                return;
-            }
-
-            const url = urls[index];
-            openTabForUrl(url);
-            index++;
-        }, 3000); // 3 seconds delay
-        */
+        // 2. 각 URL을 백그라운드 탭으로 순차적으로 열기
+        const urls = Array.from(urlsToTrack);
+        processUrlQueue(urls);
 
     } catch (error) {
         console.error('❌ Failed to fetch products:', error);
     }
 }
 
+function processUrlQueue(urls) {
+    if (urls.length === 0) {
+        console.log('✅ All tabs opened for sync.');
+        return;
+    }
+
+    const url = urls.shift();
+    openTabForUrl(url);
+
+    // Next one in 5 seconds (give time for page load + logic)
+    setTimeout(() => {
+        processUrlQueue(urls);
+    }, 5000);
+}
+
 function openTabForUrl(url) {
     chrome.tabs.create({ url: url, active: false }, (tab) => {
         activeTabs[tab.id] = url;
         console.log(`OPENED tab ${tab.id} for ${url}`);
+
+        // Safety: Close tab after 20 seconds if no price found (prevent zombie tabs)
+        setTimeout(() => {
+            if (activeTabs[tab.id]) {
+                console.log(`⏰ Timeout: Closing tab ${tab.id} (No price found)`);
+                chrome.tabs.remove(tab.id, () => {
+                    // Ignore error if tab already closed
+                    if (chrome.runtime.lastError) { }
+                });
+                delete activeTabs[tab.id];
+            }
+        }, 20000);
     });
 }
 
