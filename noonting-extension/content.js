@@ -77,38 +77,62 @@ function checkPrice() {
         // --- Naver SmartStore / Shopping ---
         else if (hostname.includes('naver.com')) {
             mallName = 'Naver';
-            let element = document.querySelector('.lowest_price_area .price') ||
-                document.querySelector('._price_area ._price') ||
-                document.querySelector('.price_area .price') ||
-                document.querySelector('.product_price .price');
 
-            // Fallback: Text Search for "99,000원" format if selector fails
-            if (!price && (!element || !parsePrice(element.innerText))) {
-                // Scan for elements containing "원" and look for price pattern
-                const candidates = Array.from(document.querySelectorAll('span, strong, div, em, b'));
-
-                for (const el of candidates) {
-                    // Normalize text: remove whitespace and hidden characters
-                    const text = el.innerText.replace(/\s+/g, '');
-                    // Match pattern: Number + '원' (e.g., "169,000원")
-                    const match = text.match(/([0-9,]+)원/);
-
-                    // Filter out unlikely candidates (too long text, dates, etc.)
-                    // ensuring the text is short enough to be a price label
-                    if (match && text.length < 50) {
-                        const rawPrice = match[1];
-                        // Basic validation: meaningful number length
-                        if (rawPrice.replace(/,/g, '').length >= 3) {
-                            const parsed = parsePrice(rawPrice);
-                            if (parsed > 0) {
-                                price = parsed;
-                                break; // Stop at first valid match
+            // 방법 1: JSON-LD 구조화 데이터 (가장 안정적)
+            try {
+                const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+                for (const script of scripts) {
+                    try {
+                        let data = JSON.parse(script.textContent);
+                        if (Array.isArray(data)) data = data[0];
+                        if (data && data.offers) {
+                            const offers = Array.isArray(data.offers) ? data.offers : [data.offers];
+                            for (const offer of offers) {
+                                if (offer.price) {
+                                    price = parseInt(String(offer.price).replace(/[^0-9]/g, ''));
+                                    if (price > 0) break;
+                                }
                             }
+                        }
+                        if (price > 0) break;
+                    } catch (e) { /* ignore */ }
+                }
+            } catch (e) { /* ignore */ }
+
+            // 방법 2: Blind 스팬 (네이버 스마트스토어 전용)
+            if (!price || price === 0) {
+                const blindSpan = Array.from(document.querySelectorAll('span.blind'))
+                    .find(el => el.textContent.includes('상품 가격'));
+                if (blindSpan && blindSpan.nextElementSibling) {
+                    const priceText = blindSpan.nextElementSibling.textContent;
+                    price = parsePrice(priceText);
+                    console.log(`🔍 [Noonting] Naver blind span price: ${price}`);
+                }
+            }
+
+            // 방법 3: 기존 CSS 선택자
+            if (!price || price === 0) {
+                const element = document.querySelector('.lowest_price_area .price') ||
+                    document.querySelector('._price_area ._price') ||
+                    document.querySelector('.price_area .price') ||
+                    document.querySelector('.product_price .price');
+                if (element) price = parsePrice(element.innerText);
+            }
+
+            // 방법 4: 패턴 스캔 (최후의 수단)
+            if (!price || price === 0) {
+                const candidates = Array.from(document.querySelectorAll('span, strong, div, em, b'));
+                for (const el of candidates) {
+                    const text = el.innerText.replace(/\s+/g, '');
+                    const match = text.match(/([0-9,]+)원/);
+                    if (match && text.length < 30) {
+                        const parsed = parsePrice(match[1]);
+                        if (parsed > 1000) {
+                            price = parsed;
+                            break;
                         }
                     }
                 }
-            } else if (element) {
-                price = parsePrice(element.innerText);
             }
         }
 
