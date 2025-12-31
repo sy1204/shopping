@@ -127,9 +127,9 @@ async function crawlProductUrl(url) {
 
         const page = await context.newPage();
 
-        // 1. 페이지 접속
+        // 1. 페이지 접속 (networkidle로 완전 로드 대기)
         console.log('📄 [Playwright] Navigating...');
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
 
         // 2. 랜덤 대기 (사람처럼)
         console.log('⏳ [Playwright] Random delay...');
@@ -139,8 +139,9 @@ async function crawlProductUrl(url) {
         console.log('📜 [Playwright] Human-like scrolling...');
         await humanScroll(page);
 
-        // 4. 추가 대기
-        await randomDelay(1000, 2000);
+        // 4. 동적 콘텐츠 로드 대기 (네이버 등 SPA 대응)
+        console.log('⏳ [Playwright] Waiting for dynamic content...');
+        await page.waitForTimeout(3000);
 
         // 5. 셀렉터 찾기
         const hostname = new URL(url).hostname;
@@ -153,58 +154,121 @@ async function crawlProductUrl(url) {
             }
         }
 
-        // 6. 데이터 추출
+        // 6. 데이터 추출 (JSON-LD 우선, UI 폴백)
         console.log('🔍 [Playwright] Extracting data...');
-        const fallbackSelectors = ['span.total-price > strong', '._price', '.price_real'];
 
-        const result = await page.evaluate(({ sel, fallback }) => {
-            // 가격 추출
-            const getPrice = (priceSelectors) => {
-                if (!priceSelectors || priceSelectors.length === 0) return 0;
+        const result = await page.evaluate(({ sel }) => {
+            let price = 0;
+            let title = null;
+            let image = null;
 
-                for (const selector of priceSelectors) {
+            // ========== 방법 1: JSON-LD 구조화 데이터 (가장 안정적) ==========
+            try {
+                const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+                for (const script of scripts) {
+                    try {
+                        let data = JSON.parse(script.textContent);
+
+                        // 배열인 경우 첫 번째 요소 사용
+                        if (Array.isArray(data)) {
+                            data = data[0];
+                        }
+
+                        // Product 타입 확인
+                        if (data && (data['@type'] === 'Product' || data.offers)) {
+                            title = title || data.name;
+                            image = image || (Array.isArray(data.image) ? data.image[0] : data.image);
+
+                            if (data.offers) {
+                                const offers = Array.isArray(data.offers) ? data.offers : [data.offers];
+                                for (const offer of offers) {
+                                    const offerPrice = offer.price || offer.lowPrice;
+                                    if (offerPrice) {
+                                        const parsedPrice = parseInt(String(offerPrice).replace(/[^0-9]/g, ''));
+                                        if (parsedPrice > 0) {
+                                            price = parsedPrice;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (price > 0) break;
+                    } catch (parseErr) {
+                        // 개별 스크립트 파싱 실패 - 다음 스크립트로
+                    }
+                }
+            } catch (e) {
+                // JSON-LD 전체 실패
+            }
+
+            // ========== 방법 2: OG 메타 태그 ==========
+            if (!title) {
+                const ogTitle = document.querySelector('meta[property="og:title"]');
+                title = ogTitle?.content || document.title || null;
+            }
+            if (!image) {
+                const ogImage = document.querySelector('meta[property="og:image"]');
+                image = ogImage?.content || null;
+            }
+            if (price === 0) {
+                // product:price:amount 메타 태그 확인
+                const metaPrice = document.querySelector('meta[property="product:price:amount"]');
+                if (metaPrice?.content) {
+                    price = parseInt(metaPrice.content) || 0;
+                }
+            }
+
+            // ========== 방법 3: UI에서 스크랩 (폴백) ==========
+            if (price === 0) {
+                // 네이버: blind 스팬 다음 형제 요소에서 가격 추출
+                const blindSpan = Array.from(document.querySelectorAll('span.blind'))
+                    .find(el => el.textContent.includes('상품 가격'));
+                if (blindSpan) {
+                    const priceEl = blindSpan.nextElementSibling;
+                    if (priceEl) {
+                        const priceText = priceEl.textContent.replace(/[^0-9]/g, '');
+                        if (priceText) price = parseInt(priceText);
+                    }
+                }
+            }
+
+            if (price === 0 && sel?.price) {
+                // 기존 선택자 사용
+                for (const selector of sel.price) {
                     try {
                         const elements = document.querySelectorAll(selector);
                         for (const el of elements) {
                             const text = el.innerText || el.textContent || '';
                             const match = text.replace(/[^0-9]/g, '');
                             if (match && parseInt(match) > 100) {
-                                return parseInt(match);
+                                price = parseInt(match);
+                                break;
                             }
                         }
+                        if (price > 0) break;
                     } catch (e) { /* ignore */ }
                 }
+            }
 
-                // Fallback: 가격 패턴 스캔
+            // 최종 폴백: 페이지 전체에서 가격 패턴 스캔
+            if (price === 0) {
                 const candidates = document.querySelectorAll('span, strong, em, b, div');
                 for (const el of candidates) {
                     const text = (el.innerText || '').replace(/\s+/g, '');
                     const match = text.match(/([0-9,]+)원/);
                     if (match && text.length < 30) {
-                        const price = parseInt(match[1].replace(/,/g, ''));
-                        if (price > 100 && price < 100000000) {
-                            return price;
+                        const parsedPrice = parseInt(match[1].replace(/,/g, ''));
+                        if (parsedPrice > 100 && parsedPrice < 100000000) {
+                            price = parsedPrice;
+                            break;
                         }
                     }
                 }
-                return 0;
-            };
+            }
 
-            // 메타데이터 추출
-            const getMetaContent = (selector) => {
-                if (!selector) return null;
-                const el = document.querySelector(selector);
-                return el?.content || el?.getAttribute('content') || el?.innerText || null;
-            };
-
-            const priceSelectors = sel ? sel.price : fallback;
-
-            return {
-                price: getPrice(priceSelectors),
-                title: getMetaContent('meta[property="og:title"]') || document.title || null,
-                image: getMetaContent('meta[property="og:image"]') || null
-            };
-        }, { sel: selectors, fallback: fallbackSelectors });
+            return { price, title, image };
+        }, { sel: selectors });
 
         const mallName = detectMallName(url);
 
