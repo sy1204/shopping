@@ -315,6 +315,7 @@ app.get('/api/products', async (req, res) => {
             category: p.category,
             targetPrice: p.target_price || 0,
             memo: p.memo || "",
+            description: p.description || "",
             alertOptions: p.alert_options || {},
             specs: [],
             malls: p.product_links.map(link => ({
