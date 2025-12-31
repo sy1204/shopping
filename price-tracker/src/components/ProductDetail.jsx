@@ -79,7 +79,6 @@ const ProductDetail = ({
 
             {/* 1. TOP SECTION: Product Info (Summary) */}
             <div style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '16px', background: 'white' }}>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#888', marginBottom: '12px' }}>상품 정보</div>
                 <div style={{ display: 'flex', gap: '2rem' }}>
                     <div style={{ width: '100px', height: '100px', padding: '5px', border: '1px solid #eee', borderRadius: '12px', flexShrink: 0 }}>
                         <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -285,6 +284,18 @@ const ProductDetail = ({
                     </div>
                 )}
             </div>
+
+            {/* 4. BOTTOM SECTION: Product Description (Crawled) */}
+            {selectedProduct.description && (
+                <div style={{ padding: '1.5rem', border: '1px solid #f0f0f0', borderRadius: '16px', background: '#fafafa' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📦 상품 설명 (크롤링)
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                        {selectedProduct.description}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

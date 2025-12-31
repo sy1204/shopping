@@ -76,7 +76,7 @@ function openTabForUrl(url) {
 }
 
 async function handlePriceFound(data, tabId) {
-    const { url, price, mall, title, image } = data; // Added title, image
+    const { url, price, mall, title, image, description } = data; // Added description
     console.log(`💰 Price Found: ${price} at ${mall} (${url})`);
 
     // 1. 서버로 데이터 전송
@@ -88,7 +88,7 @@ async function handlePriceFound(data, tabId) {
         await fetch(`${API_BASE_URL}/products/0/price`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, price, title, image }) // Added title, image
+            body: JSON.stringify({ url, price, title, image, description }) // Added description
         });
         console.log('💾 Price & Info saved to server.');
     } catch (error) {

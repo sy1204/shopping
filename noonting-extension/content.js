@@ -56,6 +56,7 @@ function checkPrice() {
     let mallName = 'Unknown';
     let title = null;
     let image = null;
+    let description = null;
 
     try {
         // --- Metadata Extraction (Common) ---
@@ -159,9 +160,23 @@ function checkPrice() {
             if (element) price = parsePrice(element.innerText);
         }
 
+        // --- Common: Description Extraction ---
+        // Try og:description first
+        if (!description) {
+            const ogDesc = document.querySelector('meta[property="og:description"]');
+            description = ogDesc?.content || null;
+        }
+        if (!description) {
+            const metaDesc = document.querySelector('meta[name="description"]');
+            description = metaDesc?.content || null;
+        }
+
         // 가격을 찾았으면 전송
         if (price && price > 0) {
             console.log(`✅ [Noonting] Price found: ${price} (${mallName})`);
+            if (description) {
+                console.log(`📝 [Noonting] Description: ${description.substring(0, 100)}...`);
+            }
             chrome.runtime.sendMessage({
                 type: 'PRICE_FOUND',
                 data: {
@@ -169,7 +184,8 @@ function checkPrice() {
                     price: price,
                     mall: mallName,
                     title: title,
-                    image: image
+                    image: image,
+                    description: description
                 }
             });
             return true; // Found!

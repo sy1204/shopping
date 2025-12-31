@@ -159,14 +159,14 @@ app.post('/api/products', async (req, res) => {
 // 3. 가격 업데이트 API (For Extension)
 app.post('/api/products/:id/price', async (req, res) => {
     const { id } = req.params; // productId (검증용, 실제로는 url로 찾음)
-    const { url, price, title, image } = req.body; // Added title, image
+    const { url, price, title, image, description } = req.body; // Added description
 
     const listPrice = parseInt(price);
     if (!url || isNaN(listPrice)) return res.status(400).json({ error: 'URL and valid price are required' });
 
-    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${listPrice}원 (Title: ${title ? 'Yes' : 'No'})`);
+    console.log(`💰 [API] 가격 업데이트 요청: ${url} -> ${listPrice}원 (Title: ${title ? 'Yes' : 'No'}, Desc: ${description ? 'Yes' : 'No'})`);
 
-    const result = await savePriceUpdate(url, listPrice, title, image);
+    const result = await savePriceUpdate(url, listPrice, title, image, description);
 
     if (result.success) {
         res.json({ message: 'Price and info updated successfully', result });
