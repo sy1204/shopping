@@ -286,16 +286,14 @@ const ProductDetail = ({
             </div>
 
             {/* 4. BOTTOM SECTION: Product Description (Crawled) */}
-            {selectedProduct.description && (
-                <div style={{ padding: '1.5rem', border: '1px solid #f0f0f0', borderRadius: '16px', background: '#fafafa' }}>
-                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        📦 상품 설명 (크롤링)
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-                        {selectedProduct.description}
-                    </div>
+            <div style={{ padding: '1.5rem', border: '1px solid #f0f0f0', borderRadius: '16px', background: '#fafafa' }}>
+                <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#333', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📦 상품 설명 (크롤링)
                 </div>
-            )}
+                <div style={{ fontSize: '13px', color: selectedProduct.description ? '#555' : '#aaa', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                    {selectedProduct.description || "상품 링크를 방문하면 확장프로그램이 설명을 자동으로 수집합니다."}
+                </div>
+            </div>
         </div>
     );
 };
