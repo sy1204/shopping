@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://localhost:3002/api';
 
 // 1. 메인 앱(대시보드) 접속 시 동기화 시작
 // 1. 메인 앱(대시보드) 접속 시 동기화 시작

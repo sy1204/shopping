@@ -3,12 +3,12 @@
 if (window.location.hostname.includes('shopping-sy1204s-projects.vercel.app') || window.location.hostname.includes('localhost')) {
     console.log('👀 Noonting Dashboard detected. Ready for Sync.');
 
-    // 1. Initial Sync on Load
-    window.addEventListener('load', () => {
-        chrome.runtime.sendMessage({ type: 'START_SYNC' }, (response) => {
-            console.log('✅ Sync started:', response);
-        });
-    });
+    // 1. Initial Sync on Load - DISABLED by user request
+    // window.addEventListener('load', () => {
+    //     chrome.runtime.sendMessage({ type: 'START_SYNC' }, (response) => {
+    //         console.log('✅ Sync started:', response);
+    //     });
+    // });
 
     // 2. On-Demand Sync via Button
     window.addEventListener('message', (event) => {

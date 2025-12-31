@@ -290,7 +290,7 @@ function Dashboard() {
                         selectedProduct={selectedProduct}
                         user={user}
                         onUpdateMemo={updateMemo}
-                        onAdjustTargetPrice={adjustTargetPrice}
+                        onUpdateTargetPrice={updateTargetPrice}
                         onToggleAlertOption={toggleAlertOption}
                         onUpdateCategory={updateProductCategory}
                     />
