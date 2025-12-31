@@ -137,9 +137,9 @@ const ProductDetail = ({
                 {/* Left: Chart (Flex 2) */}
                 <div style={{ flex: 2, background: '#fafafa', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#666', marginBottom: '1rem' }}>가격 변동 추이</div>
-                    <div style={{ flex: 1, minHeight: 0 }}>
+                    <div style={{ flex: 1, minHeight: 0, outline: 'none' }}>
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={primaryMallData?.histories || []} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                            <LineChart data={primaryMallData?.histories || []} margin={{ top: 10, right: 20, bottom: 20, left: 10 }}>
                                 <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
                                 <XAxis
                                     dataKey="date"
@@ -194,7 +194,7 @@ const ProductDetail = ({
                             <Bell size={16} /> 알림 설정
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5, whiteSpace: 'nowrap' }}>
                                 <input
                                     type="checkbox"
                                     checked={selectedProduct.alertOptions?.targetHit !== false}
@@ -204,7 +204,7 @@ const ProductDetail = ({
                                 />
                                 <span>목표가 도달 시 알림</span>
                             </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5 }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', cursor: user ? 'pointer' : 'default', opacity: user ? 1 : 0.5, whiteSpace: 'nowrap' }}>
                                 <input
                                     type="checkbox"
                                     checked={selectedProduct.alertOptions?.priceDrop !== false}

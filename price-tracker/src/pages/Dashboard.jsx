@@ -92,12 +92,27 @@ function Dashboard() {
         }
     };
 
-    const updateMemo = (productId, newMemo) => {
+    const updateMemo = async (productId, newMemo) => {
+        // Optimistic UI update
         const updated = products.map(p =>
             p.id === productId ? { ...p, memo: newMemo } : p
         );
         setProducts(updated);
-        // Note: Ideally we should persist this to backend
+
+        // Persist to backend
+        try {
+            await fetch(`${API_BASE_URL}/products/${productId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': session?.access_token ? `Bearer ${session.access_token}` : ''
+                },
+                body: JSON.stringify({ memo: newMemo })
+            });
+        } catch (error) {
+            console.error("Failed to save memo:", error);
+            setNotification({ message: '메모 저장에 실패했습니다.', type: 'error' });
+        }
     };
 
     const adjustTargetPrice = (delta) => {
