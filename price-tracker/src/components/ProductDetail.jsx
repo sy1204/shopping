@@ -88,7 +88,7 @@ const ProductDetail = ({
                                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
                                 }}
                             >
-                                {selectedProduct.category === 'managed' ? '구매검토로 복귀' : '구매완료 (관리로 이동)'}
+                                {selectedProduct.category === 'managed' ? '구매검토로 복귀' : '물품관리로 이동'}
                             </button>
                         )}
                     </div>
