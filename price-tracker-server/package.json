@@ -15,9 +15,13 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0",
     "axios": "^1.13.2",
+    "cheerio": "^1.1.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "nodemon": "^3.1.11"
+    "node-cron": "^4.2.1",
+    "nodemon": "^3.1.11",
+    "playwright": "^1.57.0",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }

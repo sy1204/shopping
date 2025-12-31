@@ -21,6 +21,8 @@ const { supabase, saveCrawlResult, saveSearchResults, savePriceUpdate, getProduc
 const { searchMalls } = require('./crawler');
 const authMiddleware = require('./middleware/auth');
 const { getAllProducts, deleteProduct, updateProduct, getAllUsers, deleteUser, updateUser } = require('./db');
+const { crawlProductUrl, detectMallName } = require('./playwright_crawler');
+const { initScheduler, manualCrawl } = require('./scheduler');
 
 // Admin Middleware
 const adminMiddleware = (req, res, next) => {
@@ -74,7 +76,7 @@ app.post('/api/search', async (req, res) => {
     }
 });
 
-// 2. URL 직접 등록 API (New Feature)
+// 2. URL 직접 등록 API (Playwright 크롤링 지원)
 app.post('/api/products', async (req, res) => {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: 'URL is required' });
@@ -85,42 +87,68 @@ app.post('/api/products', async (req, res) => {
     let image = '';
     let price = 0;
     let fetchSuccess = false;
+    let crawlMethod = 'none';
 
+    // 1. Playwright 크롤링 시도
     try {
-        // 1. Fetch Page Metadata (Best Effort)
-        const response = await axios.get(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
-            timeout: 5000
-        });
-        const html = response.data;
+        console.log('🎭 [Playwright] Attempting crawl...');
+        const crawlResult = await crawlProductUrl(url);
 
-        const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
-        const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
-
-        if (titleMatch) title = titleMatch[1];
-        if (imageMatch) image = imageMatch[1];
-        fetchSuccess = true;
-
-        console.log(`📦 Metadata Fetched: ${title}`);
-
-    } catch (error) {
-        console.warn('⚠️ URL Fetch Failed (Network/Blocked). Registering as Placeholder.', error.message);
-        // Continue with default placeholder values
+        if (crawlResult.success) {
+            title = crawlResult.title || title;
+            image = crawlResult.image || image;
+            price = crawlResult.price || 0;
+            fetchSuccess = true;
+            crawlMethod = 'playwright';
+            console.log(`✅ [Playwright] Success: ${title} - ${price}원`);
+        } else {
+            console.warn('⚠️ [Playwright] Failed:', crawlResult.error);
+        }
+    } catch (playwrightError) {
+        console.warn('⚠️ [Playwright] Exception:', playwrightError.message);
     }
 
-    // 2. Save to DB (Even if fetch failed)
+    // 2. Fallback: Axios OGP 메타데이터
+    if (!fetchSuccess) {
+        try {
+            console.log('📡 [Fallback] Trying axios metadata fetch...');
+            const response = await axios.get(url, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+                timeout: 8000
+            });
+            const html = response.data;
+
+            const titleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i) || html.match(/<title>([^<]+)<\/title>/i);
+            const imageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
+
+            if (titleMatch) title = titleMatch[1];
+            if (imageMatch) image = imageMatch[1];
+            fetchSuccess = true;
+            crawlMethod = 'axios';
+            console.log(`📦 [Axios] Metadata Fetched: ${title}`);
+        } catch (error) {
+            console.warn('⚠️ [Axios] Fetch Failed:', error.message);
+        }
+    }
+
+    // 3. Save to DB
+    const mallName = detectMallName(url);
     const result = await saveCrawlResult({
         title: title,
         image: image,
         price: price,
-        url: url
+        url: url,
+        mall: mallName
     });
 
     if (result.success) {
         res.json({
-            message: fetchSuccess ? 'Product registered successfully' : 'Product registered (Placeholder). Extension will update details.',
+            message: fetchSuccess
+                ? `Product registered successfully (via ${crawlMethod})`
+                : 'Product registered (Placeholder). Extension will update details.',
             productId: result.productId,
             linkId: result.linkId,
+            crawlMethod: crawlMethod,
             isPlaceholder: !fetchSuccess
         });
     } else {
@@ -352,7 +380,26 @@ app.post('/api/subscriptions', authMiddleware, async (req, res) => {
     }
 });
 
+// Manual crawl trigger endpoint (for testing)
+app.post('/api/admin/crawl', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        console.log('🔧 [Admin] Manual crawl triggered');
+        // Run crawl in background, don't wait
+        manualCrawl().catch(err => console.error('Manual crawl error:', err));
+        res.json({ message: 'Manual crawl started. Check server logs for progress.' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+
+    // Initialize scheduler (disabled in dev, enable for production)
+    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_SCHEDULER === 'true') {
+        initScheduler();
+    } else {
+        console.log('📅 [Scheduler] Disabled in development mode. Set ENABLE_SCHEDULER=true to enable.');
+    }
 });
